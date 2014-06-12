@@ -7,22 +7,18 @@ Release notes:
 
 initial version
 """
-from mi.core.instrument.instrument_driver import SingleConnectionInstrumentDriver
 
 __author__ = 'Bill Bollenbacher & Dan Mergens'
 __license__ = 'Apache 2.0'
 
 import re
 
+from mi.core.instrument.instrument_driver import SingleConnectionInstrumentDriver
 from mi.core.log import get_logger
-
-log = get_logger()
-
 from mi.core.instrument.protocol_param_dict import \
     ProtocolParameterDict, \
     ParameterDictType, \
     ParameterDictVisibility
-
 from mi.instrument.mclane.driver import \
     NEWLINE, \
     ProtocolEvent, \
@@ -35,12 +31,13 @@ from mi.instrument.mclane.driver import \
     McLaneProtocol, \
     ProtocolState
 
-NUM_PORTS = 48  # number of collection bags
 
 ####
 #    Driver Constant Definitions
 ####
 
+NUM_PORTS = 48  # number of collection bags
+log = get_logger()
 
 FLUSH_VOLUME = 150
 FLUSH_RATE = 100
@@ -87,7 +84,6 @@ class DataParticleType(McLaneDataParticleType):
     """
     Data particle types produced by this driver
     """
-    # TODO - define which commands will be published to user
     RASFL_PARSED = 'rasfl_parsed'
 
 
@@ -114,6 +110,7 @@ class InstrumentDriver(SingleConnectionInstrumentDriver):
     Subclasses SingleConnectionInstrumentDriver with connection state
     machine.
     """
+
     def __init__(self, evt_callback):
         SingleConnectionInstrumentDriver.__init__(self, evt_callback)
 

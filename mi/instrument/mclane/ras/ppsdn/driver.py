@@ -7,22 +7,17 @@ Release notes:
 
 initial version
 """
-from mi.core.instrument.instrument_driver import SingleConnectionInstrumentDriver
-
 __author__ = 'Dan Mergens'
 __license__ = 'Apache 2.0'
 
 import re
 
+from mi.core.instrument.instrument_driver import SingleConnectionInstrumentDriver
 from mi.core.log import get_logger
-
-log = get_logger()
-
 from mi.core.instrument.protocol_param_dict import \
     ProtocolParameterDict, \
     ParameterDictType, \
     ParameterDictVisibility
-
 from mi.instrument.mclane.driver import \
     NEWLINE, \
     ProtocolEvent, \
@@ -34,6 +29,8 @@ from mi.instrument.mclane.driver import \
     McLaneSampleDataParticle, \
     McLaneProtocol, \
     ProtocolState
+
+log = get_logger()
 
 NUM_PORTS = 24  # number of collection filters
 
@@ -92,24 +89,6 @@ class DataParticleType(McLaneDataParticleType):
 # Data Particles
 ###############################################################################
 
-# class PPSDNSampleDataParticleKey(McLaneSampleDataParticleKey):
-#    # TODO - just use base class
-#    PUMP_STATUS = 'pump_status'
-#    PORT = 'port'
-#    VOLUME_COMMANDED = 'volume_commanded'
-#    FLOW_RATE_COMMANDED = 'flow_rate_commanded'
-#    MIN_FLOW_COMMANDED = 'min_flow_commanded'
-#    TIME_LIMIT = 'time_limit'
-#    VOLUME_ACTUAL = 'volume'
-#    FLOW_RATE_ACTUAL = 'flow_rate'
-#    MIN_FLOW_ACTUAL = 'min_flow'
-#    TIMER = 'elapsed_time'
-#    DATE = 'date'
-#    TIME = 'time_of_day'
-#    BATTERY = 'battery_voltage'
-#    CODE = 'code'
-#
-
 # data particle for forward, reverse, and result commands
 #  e.g.:
 #                      --- command ---   -------- result -------------
@@ -129,6 +108,7 @@ class InstrumentDriver(SingleConnectionInstrumentDriver):
     Subclasses SingleConnectionInstrumentDriver with connection state
     machine.
     """
+
     def __init__(self, evt_callback):
         SingleConnectionInstrumentDriver.__init__(self, evt_callback)
 

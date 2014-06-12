@@ -7,51 +7,43 @@ Release notes:
 
 initial version
 """
-import datetime
 
 __author__ = 'Dan Mergens'
 __license__ = 'Apache 2.0'
 
+import datetime
 import re
 import time
 
 from mi.core.log import get_logger
-
-log = get_logger()
-
 from mi.core.common import BaseEnum
-from mi.core.util import dict_equal
 from mi.core.exceptions import SampleException, \
     InstrumentParameterException, \
     InstrumentProtocolException, \
     InstrumentTimeoutException
-
 from mi.core.instrument.instrument_protocol import \
     CommandResponseInstrumentProtocol, \
     RE_PATTERN, \
     DEFAULT_CMD_TIMEOUT
 from mi.core.instrument.instrument_fsm import ThreadSafeFSM
 from mi.core.instrument.chunker import StringChunker
-
 from mi.core.instrument.instrument_driver import \
     DriverEvent, \
     DriverAsyncEvent, \
     DriverProtocolState, \
     DriverParameter, \
     ResourceAgentState
-
 from mi.core.instrument.data_particle import \
     DataParticle, \
     DataParticleKey, \
     CommonDataParticleType
-
 from mi.core.instrument.driver_dict import DriverDictKey
-
 from mi.core.instrument.protocol_param_dict import ProtocolParameterDict, \
     ParameterDictType, \
     ParameterDictVisibility
 
 
+log = get_logger()
 NEWLINE = '\r\n'
 CONTROL_C = '\x03'
 NUM_PORTS = 24  # number of collection bags
@@ -59,7 +51,6 @@ NUM_PORTS = 24  # number of collection bags
 # default timeout.
 INTER_CHARACTER_DELAY = .2  # works
 # INTER_CHARACTER_DELAY = .02 - too fast
-# INTER_CHARACTER_DELAY = .04
 
 PUMP_RATE_ERROR = 1.15  # PPS is off in it's flow rate measurement by 14.5% - TODO - check RAS data
 
@@ -100,7 +91,6 @@ class ProtocolEvent(BaseEnum):
     GET = DriverEvent.GET
     SET = DriverEvent.SET
     ACQUIRE_SAMPLE = DriverEvent.ACQUIRE_SAMPLE
-    # ACQUIRE_STATUS = DriverEvent.ACQUIRE_STATUS
     CLOCK_SYNC = DriverEvent.CLOCK_SYNC
     FLUSH = 'DRIVER_EVENT_FLUSH'
     FILL = 'DRIVER_EVENT_FILL'
@@ -117,7 +107,6 @@ class Capability(BaseEnum):
     SET = ProtocolEvent.SET
     CLOCK_SYNC = ProtocolEvent.CLOCK_SYNC
     ACQUIRE_SAMPLE = ProtocolEvent.ACQUIRE_SAMPLE
-    # ACQUIRE_STATUS = ProtocolEvent.ACQUIRE_STATUS
     CLEAR = ProtocolEvent.CLEAR
 
 
@@ -237,12 +226,7 @@ class McLaneDataParticleType(BaseEnum):
     """
     Data particle types produced by this driver
     """
-    # TODO - define which commands will be published to user
     RAW = CommonDataParticleType.RAW
-    MCLANE_PARSED = 'mclane_parsed'
-    PUMP_STATUS = 'pump_status'
-    VOLTAGE_STATUS = 'battery'
-    VERSION_INFO = 'version'
 
 
 ###############################################################################
@@ -374,7 +358,6 @@ class McLaneProtocol(CommandResponseInstrumentProtocol):
                 (ProtocolEvent.START_DIRECT, self._handler_command_start_direct),
                 (ProtocolEvent.CLOCK_SYNC, self._handler_sync_clock),
                 (ProtocolEvent.ACQUIRE_SAMPLE, self._handler_command_acquire),
-                # (ProtocolEvent.ACQUIRE_STATUS, self._handler_command_status),
                 (ProtocolEvent.CLEAR, self._handler_command_clear),
                 (ProtocolEvent.GET, self._handler_get),
                 (ProtocolEvent.SET, self._handler_command_set),
@@ -414,11 +397,6 @@ class McLaneProtocol(CommandResponseInstrumentProtocol):
         # Add build handlers for device commands - we are only using simple commands
         for cmd in McLaneCommand.list():
             self._add_build_handler(cmd, self._build_command)
-
-        # Add response handlers for device commands.
-        # self._add_response_handler(McLaneCommand.BATTERY, self._parse_battery_response)
-        # self._add_response_handler(McLaneCommand.CLOCK, self._parse_clock_response)
-        # self._add_response_handler(McLaneCommand.PORT, self._parse_port_response)
 
         # Construct the parameter dictionary containing device parameters,
         # current parameter values, and set formatting functions.
@@ -492,7 +470,7 @@ class McLaneProtocol(CommandResponseInstrumentProtocol):
         new_config = self._param_dict.get_config()
         log.debug('new config: %s\nold config: %s', new_config, old_config)
         # check for parameter change
-        if not dict_equal(old_config, new_config):
+        if not old_config == new_config:
             self._driver_event(DriverAsyncEvent.CONFIG_CHANGE)
 
     def apply_startup_params(self):
@@ -500,17 +478,6 @@ class McLaneProtocol(CommandResponseInstrumentProtocol):
         Apply startup parameters
         """
 
-        # fn = "apply_startup_params"
-        # config = self.get_startup_config()
-        # log.debug("%s: startup config = %s", fn, config)
-        #
-        # for param in Parameter.list():
-        #     if param in config:
-        #         self._param_dict.set_value(param, config[param])
-        #
-        # log.debug("%s: new parameters", fn)
-        # for x in config:
-        #     log.debug("  parameter %s: %s", x, config[x])
         if self.get_current_state() != DriverProtocolState.COMMAND:
             raise InstrumentProtocolException('cannot set parameters outside command state')
 
@@ -581,11 +548,8 @@ class McLaneProtocol(CommandResponseInstrumentProtocol):
         @retval True if successful, False if unable to return home
         """
         func = '_do_cmd_home'
-        log.debug('--- djm --- command home')
         port = int(self._do_cmd_resp(McLaneCommand.PORT, response_regex=McLaneResponse.PORT)[0])
-        log.debug('--- djm --- at port: %d', port)
         if port != 0:
-            log.debug('--- djm --- going home')
             self._do_cmd_resp(McLaneCommand.HOME, response_regex=McLaneResponse.HOME, timeout=Timeout.HOME)
             port = int(self._do_cmd_resp(McLaneCommand.PORT, response_regex=McLaneResponse.PORT)[0])
             if port != 0:
@@ -605,22 +569,17 @@ class McLaneProtocol(CommandResponseInstrumentProtocol):
 
         if not self._do_cmd_home():
             self._async_raise_fsm_event(ProtocolEvent.INSTRUMENT_FAILURE)
-        log.debug('--- djm --- flushing home port, %d %d %d',
-                  flush_volume, flush_flowrate, flush_flowrate)
         self._do_cmd_no_resp(McLaneCommand.FORWARD, flush_volume, flush_flowrate, flush_minflow)
 
     def _do_cmd_fill(self, *args, **kwargs):
         """
         Fill the sample at the next available port
         """
-        log.debug('--- djm --- collecting sample in port %d', self.next_port)
         fill_volume = self._param_dict.get(Parameter.FILL_VOLUME)
         fill_flowrate = self._param_dict.get(Parameter.FILL_FLOWRATE)
         fill_minflow = self._param_dict.get(Parameter.FILL_MINFLOW)
 
-        log.debug('--- djm --- collecting sample in port %d', self.next_port)
         reply = self._do_cmd_resp(McLaneCommand.PORT, self.next_port, response_regex=McLaneResponse.PORT)
-        log.debug('--- djm --- port returned:\n%r', reply)
 
         self.next_port += 1  # succeed or fail, we can't use this port again
         # TODO - commit next_port to the agent for persistent data store
@@ -636,8 +595,6 @@ class McLaneProtocol(CommandResponseInstrumentProtocol):
         clear_flowrate = self._param_dict.get(Parameter.CLEAR_FLOWRATE)
         clear_minflow = self._param_dict.get(Parameter.CLEAR_MINFLOW)
 
-        log.debug('--- djm --- clearing home port, %d %d %d',
-                  clear_volume, clear_flowrate, clear_minflow)
         self._do_cmd_no_resp(McLaneCommand.REVERSE, clear_volume, clear_flowrate, clear_minflow)
 
     ########################################################################
@@ -679,7 +636,6 @@ class McLaneProtocol(CommandResponseInstrumentProtocol):
         """
         Enter the flush state. Trigger FLUSH event.
         """
-        log.debug('--- djm --- entering FLUSH state')
         self._second_attempt = False
         self._driver_event(DriverAsyncEvent.STATE_CHANGE)
         self._async_raise_fsm_event(ProtocolEvent.FLUSH)
@@ -689,14 +645,6 @@ class McLaneProtocol(CommandResponseInstrumentProtocol):
         Begin flushing the home port. Subsequent flushing will be monitored and sent to the flush_pump_status
         handler.
         """
-        log.debug('--- djm --- in FLUSH state')
-        next_state = ProtocolState.FILL
-        next_agent_state = ResourceAgentState.BUSY
-        # 2. Set to home port
-        # 3. flush intake (home port)
-        # 4. wait 30 seconds
-        # 1. Get next available port (if no available port, bail)
-        log.debug('--- djm --- Flushing home port')
         self._do_cmd_flush()
 
         return None, (ResourceAgentState.BUSY, None)
@@ -714,9 +662,7 @@ class McLaneProtocol(CommandResponseInstrumentProtocol):
         next_state = None
         next_agent_state = None
 
-        log.debug('--- djm --- received pump status: pump status: %s, code: %d', pump_status, code)
         if pump_status == 'Result':
-            log.debug('--- djm --- flush completed - %s', TerminationCodes[code])
             if code == TerminationCodeEnum.SUDDEN_FLOW_OBSTRUCTION:
                 log.info('Encountered obstruction during flush, attempting to clear')
                 self._async_raise_fsm_event(ProtocolEvent.CLEAR)
@@ -732,7 +678,6 @@ class McLaneProtocol(CommandResponseInstrumentProtocol):
         Attempt to clear home port after stoppage has occurred during flush.
         This is only performed once. On the second stoppage, the driver will enter recovery mode.
         """
-        log.debug('--- djm --- handling clear request during flush')
         if self._second_attempt:
             return ProtocolState.RECOVERY, ResourceAgentState.BUSY
 
@@ -807,8 +752,6 @@ class McLaneProtocol(CommandResponseInstrumentProtocol):
         """
         Send the clear command. If there is an obstruction trigger a FLUSH, otherwise place driver in RECOVERY mode.
         """
-        log.debug('--- djm --- clearing home port')
-
         # 8. return to home port
         # 9. reverse flush 75 ml to pump water from exhaust line through intake line
         self._do_cmd_clear()
@@ -830,7 +773,6 @@ class McLaneProtocol(CommandResponseInstrumentProtocol):
                 log.error('Encountered obstruction during clear. Attempting flush...')
                 self._async_raise_fsm_event(ProtocolEvent.FLUSH)
             else:
-                log.debug('--- djm --- clear complete')
                 next_state = ProtocolState.COMMAND
                 next_agent_state = ResourceAgentState.COMMAND
         # if Status, nothing to do
@@ -897,28 +839,10 @@ class McLaneProtocol(CommandResponseInstrumentProtocol):
 
         return None, None
 
-        # changed = False
-        # for key, value in params.items():
-        #     log.info('Command:set - setting parameter %s to %s', key, value)
-        #     if not Parameter.has(key):
-        #         raise InstrumentProtocolException('Attempt to set undefined parameter: %s', key)
-        #     old_value = self._param_dict.get(key)
-        #     if old_value != value:
-        #         changed = True
-        #         self._param_dict.set_value(key, value)
-        #
-        # if changed:
-        #     self._driver_event(DriverAsyncEvent.CONFIG_CHANGE)
-        #
-        # next_state = None
-        # result = None
-        # return next_state, result
-
     def _handler_command_start_direct(self, *args, **kwargs):
         """
         Start direct access.
         """
-        log.debug('--- djm --- entered _handler_command_start_direct with args: %s', args)
         result = None
         next_state = ProtocolState.DIRECT_ACCESS
         next_agent_state = ResourceAgentState.DIRECT_ACCESS
@@ -935,7 +859,6 @@ class McLaneProtocol(CommandResponseInstrumentProtocol):
         Error recovery mode. The instrument failed to respond to a command and now requires the user to perform
         diagnostics and correct before proceeding.
         """
-        log.debug('--- djm --- entered recovery mode')
         self._driver_event(DriverAsyncEvent.STATE_CHANGE)
 
     ########################################################################
@@ -998,7 +921,6 @@ class McLaneProtocol(CommandResponseInstrumentProtocol):
 
         time_format = "%m/%d/%Y %H:%M:%S"
         str_val = self.get_timestamp_delayed(time_format, delay)
-        # str_val = time.strftime(time_format, time.gmtime(time.time() + self._clock_set_offset))
         log.debug("Setting instrument clock to '%s'", str_val)
 
         ras_time = self._do_cmd_resp(McLaneCommand.CLOCK, str_val, response_regex=McLaneResponse.READY)[0]
@@ -1008,15 +930,6 @@ class McLaneProtocol(CommandResponseInstrumentProtocol):
     def _handler_command_acquire(self, *args, **kwargs):
         self._handler_sync_clock()
         return ProtocolState.FLUSH, ResourceAgentState.BUSY
-
-    # def _handler_command_status(self, *args, **kwargs):
-    #     # get the following:
-    #     # - VERSION
-    #     # - CAPACITY (pump flow)
-    #     # - BATTERY
-    #     # - CODES (termination codes)
-    #     # - COPYRIGHT (termination codes)
-    #     return None, ResourceAgentState.COMMAND
 
     def _handler_command_clear(self, *args, **kwargs):
         return ProtocolState.CLEAR, ResourceAgentState.BUSY
@@ -1196,53 +1109,3 @@ class McLaneProtocol(CommandResponseInstrumentProtocol):
         """
         Update the parameter dictionary.
         """
-
-        log.debug("_update_params:")
-
-        # def _parse_battery_response(self, response, prompt):
-        #     """
-        #     Parse handler for battery command.
-        #     @param response command response string.
-        #     @param prompt prompt following command response.
-        #     @throws InstrumentProtocolException if battery command misunderstood.
-        #     """
-        #     log.debug("_parse_battery_response: response=%s, prompt=%s", response, prompt)
-        #     if prompt == Prompt.UNRECOGNIZED_COMMAND:
-        #         raise InstrumentProtocolException('battery command not recognized: %s.' % response)
-        #
-        #     if not self._param_dict.update(response):
-        #         raise InstrumentProtocolException('battery command not parsed: %s.' % response)
-        #
-        #     return
-        #
-        # def _parse_clock_response(self, response, prompt):
-        #     """
-        #     Parse handler for clock command.
-        #     @param response command response string.
-        #     @param prompt prompt following command response.
-        #     @throws InstrumentProtocolException if clock command misunderstood.
-        #     @retval the joined string from the regular expression match
-        #     """
-        #     # extract current time from response
-        #     log.debug('--- djm --- parse_clock_response: response: %r', response)
-        #     ras_time_string = ' '.join(response.split()[:2])
-        #     time_format = "%m/%d/%y %H:%M:%S"
-        #     ras_time = time.strptime(ras_time_string, time_format)
-        #     ras_time = list(ras_time)
-        #     ras_time[-1] = 0  # tm_isdst field set to 0 - using GMT, no DST
-        #
-        #     return tuple(ras_time)
-        #
-        # def _parse_port_response(self, response, prompt):
-        #     """
-        #     Parse handler for port command.
-        #     @param response command response string.
-        #     @param prompt prompt following command response.
-        #     @throws InstrumentProtocolException if port command misunderstood.
-        #     @retval the joined string from the regular expression match
-        #     """
-        #     # extract current port from response
-        #     log.debug('--- djm --- parse_port_response: response: %r', response)
-        #     port = int(response)
-        #
-        #     return port

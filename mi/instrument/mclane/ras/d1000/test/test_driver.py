@@ -253,8 +253,6 @@ class TestUNIT(InstrumentDriverUnitTestCase, UtilMixin):
     def setUp(self):
         InstrumentDriverUnitTestCase.setUp(self)
 
-    print '----- unit test -----'
-
     def test_driver_enums(self):
         """
         Verify that all driver enumeration has no duplicate values that might cause confusion.  Also
@@ -470,44 +468,6 @@ class TestQUAL(InstrumentDriverQualificationTestCase, UtilMixin):
     def setUp(self):
         InstrumentDriverQualificationTestCase.setUp(self)
 
-    # def assert_sample_polled(self, sample_data_assert, sample_queue, timeout=10):
-    #     """
-    #     Test observatory polling function.
-    #
-    #     Verifies the acquire_status command.
-    #     """
-    #     # Set up all data subscriptions.  Stream names are defined
-    #     # in the driver PACKET_CONFIG dictionary
-    #     self.data_subscribers.start_data_subscribers()
-    #     self.addCleanup(self.data_subscribers.stop_data_subscribers)
-    #
-    #     self.assert_enter_command_mode()
-    #
-    #     ###
-    #     # Poll for a sample
-    #     ###
-    #
-    #     # make sure there aren't any junk samples in the parsed
-    #     # data queue.
-    #     log.debug("Acquire Sample")
-    #     self.data_subscribers.clear_sample_queue(sample_queue)
-    #
-    #     cmd = AgentCommand(command=DriverEvent.ACQUIRE_SAMPLE)
-    #     self.instrument_agent_client.execute_resource(cmd, timeout=timeout)
-    #
-    #     # Watch the parsed data queue and return once a sample
-    #     # has been read or the default timeout has been reached.
-    #     samples = self.data_subscribers.get_samples(sample_queue, 1, timeout=timeout)
-    #     self.assertGreaterEqual(len(samples), 1)
-    #     log.error("SAMPLE: %s" % samples)
-    #
-    #     # Verify
-    #     for sample in samples:
-    #         sample_data_assert(sample)
-    #
-    #     self.assert_reset()
-    #     self.doCleanups()
-
     def test_discover(self):
         """
         verify we can discover our instrument state from streaming and autosample.
@@ -574,8 +534,6 @@ class TestQUAL(InstrumentDriverQualificationTestCase, UtilMixin):
         @brief Walk through all driver protocol states and verify capabilities
         returned by get_current_capabilities
         """
-        fn = 'test_get_capabilities'
-        # log.debug('%s: assert_enter_command_mode', fn)
         self.assert_enter_command_mode()
 
         ##################

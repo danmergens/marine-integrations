@@ -12,8 +12,6 @@ USAGE:
        $ bin/test_driver -i [-t testname]
        $ bin/test_driver -q [-t testname]
 """
-from mi.core.instrument.instrument_driver import DriverConfigKey, DriverProtocolState
-
 __author__ = 'Bill Bollenbacher & Dan Mergens'
 __license__ = 'Apache 2.0'
 
@@ -21,14 +19,10 @@ import unittest
 import time
 
 import gevent
+from mi.core.instrument.instrument_driver import DriverConfigKey, DriverProtocolState
 from mock import Mock
 from nose.plugins.attrib import attr
 from mi.core.log import get_logger
-
-
-log = get_logger()
-
-# MI imports.
 from mi.idk.unit_test import \
     InstrumentDriverTestCase, \
     InstrumentDriverUnitTestCase, \
@@ -37,9 +31,7 @@ from mi.idk.unit_test import \
     DriverTestMixin, \
     ParameterTestConfigKey, \
     AgentCapabilityType
-
 from mi.core.instrument.chunker import StringChunker
-
 from mi.instrument.mclane.driver import \
     ProtocolState, \
     ProtocolEvent, \
@@ -47,7 +39,6 @@ from mi.instrument.mclane.driver import \
     Prompt, \
     NEWLINE, \
     McLaneSampleDataParticleKey
-
 from mi.instrument.mclane.ras.rasfl.driver import \
     InstrumentDriver, \
     DataParticleType, \
@@ -55,22 +46,22 @@ from mi.instrument.mclane.ras.rasfl.driver import \
     Parameter, \
     Protocol, \
     RASFLSampleDataParticle
-
 from mi.core.exceptions import SampleException, \
     InstrumentParameterException
-
 from interface.objects import AgentCommand
-
 from ion.agents.instrument.direct_access.direct_access_server import DirectAccessTypes
 from pyon.agent.agent import \
     ResourceAgentEvent, \
     ResourceAgentState
 
+
+
 # Globals
+log = get_logger()
 raw_stream_received = False
 parsed_stream_received = False
 
-ACQUIRE_TIMEOUT = 45 * 60 + 50
+ACQUIRE_TIMEOUT = 45 * 60 + 50  # maximum time sample time is under 45 minutes, 50 seconds
 CLEAR_TIMEOUT = 110
 
 ###
@@ -131,12 +122,6 @@ class UtilMixin(DriverTestMixin):
     REQUIRED = ParameterTestConfigKey.REQUIRED
     DEFAULT = ParameterTestConfigKey.DEFAULT
     STATES = ParameterTestConfigKey.STATES
-
-    # battery voltage request response - TODO not implemented
-    RASFL_BATTERY_DATA = "Battery: 29.9V [Alkaline, 18V minimum]" + NEWLINE
-
-    # bag capacity response - TODO not implemented
-    RASFL_CAPACITY_DATA = "Bag capacity: 500" + NEWLINE
 
     RASFL_VERSION_DATA = \
         "Version:" + NEWLINE + \
@@ -252,8 +237,6 @@ class TestUNIT(InstrumentDriverUnitTestCase, UtilMixin):
     def setUp(self):
         InstrumentDriverUnitTestCase.setUp(self)
 
-    print '----- unit test -----'
-
     def test_driver_enums(self):
         """
         Verify that all driver enumeration has no duplicate values that might cause confusion.  Also
@@ -311,7 +294,7 @@ class TestUNIT(InstrumentDriverUnitTestCase, UtilMixin):
         # validating data particles are published
         self.assert_particle_published(driver, self.RASFL_SAMPLE_DATA1, self.assert_data_particle_sample, True)
 
-        # validate that a duplicate sample is not published - TODO
+        # validate that a duplicate sample is not published - not applicable for this instrument
         #self.assert_particle_not_published(driver, self.RASFL_SAMPLE_DATA1, self.assert_data_particle_sample, True)
 
         # validate that a new sample is published

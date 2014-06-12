@@ -7,34 +7,30 @@ Release notes:
 
 initial version
 """
-import functools
+
+__author__ = 'Dan Mergens'
+__license__ = 'Apache 2.0'
+
 import math
-from types import FunctionType
+import re
 
 from mi.core.driver_scheduler import \
     DriverSchedulerConfigKey, \
     TriggerType
 from mi.core.instrument.protocol_cmd_dict import ProtocolCommandDict
 from mi.core.util import dict_equal
-
-
-__author__ = 'Dan Mergens'
-__license__ = 'Apache 2.0'
-
-import re
-
-from mi.core.log import get_logger
-
-log = get_logger()
-
 from mi.core.common import BaseEnum
-from mi.core.exceptions import SampleException, \
-    InstrumentParameterException, InstrumentProtocolException, InstrumentTimeoutException
-
+from mi.core.log import \
+    get_logger, \
+    get_logging_metaclass
+from mi.core.exceptions import \
+    SampleException, \
+    InstrumentParameterException, \
+    InstrumentProtocolException, \
+    InstrumentTimeoutException
 from mi.core.instrument.instrument_protocol import CommandResponseInstrumentProtocol
 from mi.core.instrument.instrument_fsm import ThreadSafeFSM
 from mi.core.instrument.chunker import StringChunker
-
 from mi.core.instrument.instrument_driver import \
     SingleConnectionInstrumentDriver, \
     DriverEvent, \
@@ -43,51 +39,28 @@ from mi.core.instrument.instrument_driver import \
     DriverProtocolState, \
     DriverParameter, \
     ResourceAgentState
-
 from mi.core.instrument.data_particle import \
     DataParticle, \
     CommonDataParticleType
-
 from mi.core.instrument.driver_dict import DriverDictKey
-
-from mi.core.instrument.protocol_param_dict import ProtocolParameterDict, \
+from mi.core.instrument.protocol_param_dict import \
+    ProtocolParameterDict, \
     ParameterDictType, \
     ParameterDictVisibility
 
 
+log = get_logger()
+
 NEWLINE = '\r'
 
-# default timeout.
-INTER_CHARACTER_DELAY = .2
 
 ####
 #    Driver Constant Definitions
 ####
-
+INTER_CHARACTER_DELAY = .2  # default timeout.
 DEFAULT_SAMPLE_RATE = 15  # sample periodicity in seconds
 MIN_SAMPLE_RATE = 1  # in seconds
 MAX_SAMPLE_RATE = 3600  # in seconds (1 hour)
-
-
-class LoggingMetaClass(type):
-    def __new__(mcs, class_name, bases, class_dict):
-        new_class_dict = {}
-        for attributeName, attribute in class_dict.items():
-            if type(attribute) == FunctionType:
-                attribute = log_method(attribute)  # replace with a wrapped version of method
-            new_class_dict[attributeName] = attribute
-        return type.__new__(mcs, class_name, bases, new_class_dict)
-
-
-def log_method(func):
-    @functools.wraps(func)
-    def inner(*args, **kwargs):
-        log.debug('entered %s | args: %r | kwargs: %r', func.__name__, args, kwargs)
-        r = func(*args, **kwargs)
-        log.debug('exiting %s | returning %r', func.__name__, r)
-        return r
-
-    return inner
 
 
 def checksum(data):
@@ -311,7 +284,7 @@ class DataParticleType(BaseEnum):
     Data particle types produced by this driver
     """
     RAW = CommonDataParticleType.RAW
-    D1000_PARSED = 'D1000_sample'
+    D1000_PARSED = 'd1000_sample'
 
 
 ###############################################################################
@@ -412,7 +385,7 @@ class Protocol(CommandResponseInstrumentProtocol):
     Instrument protocol class
     Subclasses CommandResponseInstrumentProtocol
     """
-    __metaclass__ = LoggingMetaClass
+    __metaclass__ = get_logging_metaclass(log_level='debug')
 
     def __init__(self, prompts, newline, driver_event):
         """
@@ -467,9 +440,6 @@ class Protocol(CommandResponseInstrumentProtocol):
             self._add_response_handler(cmd, self._check_command)
         self._add_build_handler(Command.SETUP, self._build_setup_command)
         self._add_response_handler(Command.READ_SETUP, self._read_setup_response_handler)
-
-        # Add response handlers for device commands.
-        # self._add_response_handler(Command.xyz, self._parse_xyz_response)
 
         # Construct the parameter dictionary containing device parameters,
         # current parameter values, and set formatting functions.
@@ -719,7 +689,7 @@ class Protocol(CommandResponseInstrumentProtocol):
                              None,
                              int,
                              type=ParameterDictType.INT,
-                             default_value=DEFAULT_SAMPLE_RATE,
+                             value=DEFAULT_SAMPLE_RATE,
                              startup_param=True,
                              display_name='D1000 sample periodicity (sec)',
                              visibility=ParameterDictVisibility.READ_WRITE)
@@ -727,85 +697,82 @@ class Protocol(CommandResponseInstrumentProtocol):
                               int,
                               display_name='base channel address',
                               type=ParameterDictType.INT,
-                              default_value=0x31)
+                              value=0x31)
         self._add_setup_param(Parameter.LINEFEED,
                               bool,
                               display_name='line feed flag',
                               type=ParameterDictType.BOOL,
-                              default_value=False)
+                              value=False)
         self._add_setup_param(Parameter.PARITY_TYPE,
                               bool,
                               display_name='parity type',
                               type=ParameterDictType.BOOL,
-                              default_value=False)
+                              value=False)
         self._add_setup_param(Parameter.PARITY_ENABLE,
                               bool,
                               display_name='parity flag',
                               type=ParameterDictType.BOOL,
-                              default_value=False)
+                              value=False)
         self._add_setup_param(Parameter.EXTENDED_ADDRESSING,
                               bool,
                               display_name='extended addressing',
                               type=ParameterDictType.BOOL,
-                              default_value=False)
+                              value=False)
         self._add_setup_param(Parameter.BAUD_RATE,
                               int,
                               display_name='baud rate',
                               type=ParameterDictType.INT,
-                              default_value=9600)
+                              value=9600)
         self._add_setup_param(Parameter.ALARM_ENABLE,
                               bool,
                               display_name='enable alarms',
                               type=ParameterDictType.BOOL,
-                              default_value=False)
+                              value=False)
         self._add_setup_param(Parameter.LOW_ALARM_LATCH,
                               bool,
                               display_name='low alarm latching',
                               type=ParameterDictType.BOOL,
-                              default_value=False)
+                              value=False)
         self._add_setup_param(Parameter.HIGH_ALARM_LATCH,
                               bool,
                               display_name='high alarm latching',
                               type=ParameterDictType.BOOL,
-                              default_value=False)
+                              value=False)
         self._add_setup_param(Parameter.RTD_4_WIRE,
                               bool,
                               display_name='4 wire RTD flag',
                               type=ParameterDictType.BOOL,
-                              default_value=True)
+                              value=True)
         self._add_setup_param(Parameter.TEMP_UNITS,
                               bool,
                               display_name='Fahrenheit flag',
                               type=ParameterDictType.BOOL,
-                              default_value=False)
+                              value=False)
         self._add_setup_param(Parameter.ECHO,
                               bool,
                               display_name='daisy chain',
                               type=ParameterDictType.BOOL,
-                              default_value=True)
+                              value=True)
         self._add_setup_param(Parameter.COMMUNICATION_DELAY,
                               int,
                               display_name='communication delay',
                               type=ParameterDictType.INT,
-                              default_value=0)
+                              value=0)
         self._add_setup_param(Parameter.PRECISION,
                               int,
                               display_name='precision',
                               type=ParameterDictType.INT,
-                              default_value=6)
+                              value=6)
         self._add_setup_param(Parameter.LARGE_SIGNAL_FILTER_C,
                               float,
                               display_name='large signal filter constant',
                               type=ParameterDictType.FLOAT,
-                              default_value=0.0)
+                              value=0.0)
         self._add_setup_param(Parameter.SMALL_SIGNAL_FILTER_C,
                               float,
                               display_name='small signal filter constant',
                               type=ParameterDictType.FLOAT,
-                              default_value=0.50)
-
-        for key in self._param_dict.get_keys():
-            self._param_dict.set_default(key)
+                              value=0.50)
 
     def _update_params(self):
         """
@@ -886,9 +853,6 @@ class Protocol(CommandResponseInstrumentProtocol):
         pass
 
     def _handler_command_set(self, *args, **kwargs):
-        """
-        no writable parameters so does nothing, just implemented to make framework happy
-        """
         input_params = args[0]
 
         for key, value in input_params.items():
@@ -913,7 +877,6 @@ class Protocol(CommandResponseInstrumentProtocol):
         self._set_params(input_params, startup)
 
         return None, None
-        # return None, (None, None)
 
     def _handler_command_autosample(self, *args, **kwargs):
         """

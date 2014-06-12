@@ -12,7 +12,6 @@ USAGE:
        $ bin/test_driver -i [-t testname]
        $ bin/test_driver -q [-t testname]
 """
-from mi.core.instrument.instrument_driver import DriverConfigKey, DriverProtocolState
 
 __author__ = 'Dan Mergens'
 __license__ = 'Apache 2.0'
@@ -21,14 +20,12 @@ import unittest
 import time
 
 import gevent
+from mi.core.instrument.instrument_driver import \
+    DriverConfigKey, \
+    DriverProtocolState
 from mock import Mock
 from nose.plugins.attrib import attr
 from mi.core.log import get_logger
-
-
-log = get_logger()
-
-# MI imports.
 from mi.idk.unit_test import \
     InstrumentDriverTestCase, \
     InstrumentDriverUnitTestCase, \
@@ -37,9 +34,7 @@ from mi.idk.unit_test import \
     DriverTestMixin, \
     ParameterTestConfigKey, \
     AgentCapabilityType
-
 from mi.core.instrument.chunker import StringChunker
-
 from mi.instrument.mclane.driver import \
     ProtocolState, \
     ProtocolEvent, \
@@ -47,7 +42,6 @@ from mi.instrument.mclane.driver import \
     Prompt, \
     NEWLINE, \
     McLaneSampleDataParticleKey
-
 from mi.instrument.mclane.ras.ppsdn.driver import \
     InstrumentDriver, \
     DataParticleType, \
@@ -55,15 +49,15 @@ from mi.instrument.mclane.ras.ppsdn.driver import \
     Parameter, \
     Protocol, \
     PPSDNSampleDataParticle
-
 from mi.core.exceptions import SampleException
-
 from interface.objects import AgentCommand
-
 from ion.agents.instrument.direct_access.direct_access_server import DirectAccessTypes
 from pyon.agent.agent import \
     ResourceAgentEvent, \
     ResourceAgentState
+
+
+log = get_logger()
 
 # Globals
 raw_stream_received = False
@@ -130,12 +124,6 @@ class UtilMixin(DriverTestMixin):
     REQUIRED = ParameterTestConfigKey.REQUIRED
     DEFAULT = ParameterTestConfigKey.DEFAULT
     STATES = ParameterTestConfigKey.STATES
-
-    # battery voltage request response - TODO not implemented
-    PPSDN_BATTERY_DATA = "Battery: 30.1V [Alkaline, 18V minimum]" + NEWLINE
-
-    # bag capacity response - TODO not implemented
-    PPSDN_CAPACITY_DATA = "Capacity: Maxon 250mL" + NEWLINE
 
     PPSDN_VERSION_DATA = \
         "Version:" + NEWLINE + \
@@ -251,9 +239,6 @@ class TestUNIT(InstrumentDriverUnitTestCase, UtilMixin):
     def setUp(self):
         InstrumentDriverUnitTestCase.setUp(self)
 
-    print '----- unit test -----'
-
-    #@unittest.skip('not completed yet')
     def test_driver_enums(self):
         """
         Verify that all driver enumeration has no duplicate values that might cause confusion.  Also
@@ -311,7 +296,7 @@ class TestUNIT(InstrumentDriverUnitTestCase, UtilMixin):
         # validating data particles are published
         self.assert_particle_published(driver, self.PPSDN_SAMPLE_DATA1, self.assert_data_particle_sample, True)
 
-        # validate that a duplicate sample is not published - TODO
+        # validate that a duplicate sample is not published - no can do - there is no embedded timestamp
         #self.assert_particle_not_published(driver, self.RASFL_SAMPLE_DATA1, self.assert_data_particle_sample, True)
 
         # validate that a new sample is published
@@ -379,7 +364,6 @@ class TestUNIT(InstrumentDriverUnitTestCase, UtilMixin):
         driver = InstrumentDriver(self._got_data_event_callback)
         self.assert_capabilities(driver, capabilities)
 
-    #@unittest.skip('not completed yet')
     def test_driver_schema(self):
         """
         get the driver schema and verify it is configured properly
