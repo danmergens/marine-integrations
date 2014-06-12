@@ -56,6 +56,7 @@ from pyon.agent.agent import \
 
 
 
+
 # Globals
 log = get_logger()
 raw_stream_received = False
@@ -196,15 +197,6 @@ class UtilMixin(DriverTestMixin):
         """
         self.assert_data_particle_header(data_particle, DataParticleType.RASFL_PARSED)
         self.assert_data_particle_parameters(data_particle, self._sample_parameters, verify_values)
-
-    def assert_data_particle_status(self, data_particle, verify_values=False):
-        """
-        Verify a RASFL pump status data particle
-        @param data_particle: RASFL_StatusDataParticle data particle
-        @param verify_values: bool, should we verify parameter values
-        """
-        # self.assert_data_particle_header(data_particle, DataParticleType.RASFL_STATUS)
-        # self.assert_data_particle_parameters(data_particle, self._status_parameters, verify_values)
 
     def assert_time_synched(self, ras_time, tolerance=5):
         """

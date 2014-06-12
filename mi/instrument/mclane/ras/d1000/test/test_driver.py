@@ -310,7 +310,7 @@ class TestUNIT(InstrumentDriverUnitTestCase, UtilMixin):
         # validating data particles are published
         self.assert_particle_published(driver, self.SAMPLE_DATA1, self.assert_data_particle_sample, True)
 
-        # validate that a duplicate sample is not published - TODO
+        # validate that a duplicate sample is not published - unable to test with D1000
         # self.assert_particle_not_published(driver, self.SAMPLE_DATA1, self.assert_data_particle_sample, True)
 
         # validate that a new sample is published

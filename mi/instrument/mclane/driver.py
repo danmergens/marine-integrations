@@ -38,9 +38,6 @@ from mi.core.instrument.data_particle import \
     DataParticleKey, \
     CommonDataParticleType
 from mi.core.instrument.driver_dict import DriverDictKey
-from mi.core.instrument.protocol_param_dict import ProtocolParameterDict, \
-    ParameterDictType, \
-    ParameterDictVisibility
 
 
 log = get_logger()
@@ -1003,107 +1000,7 @@ class McLaneProtocol(CommandResponseInstrumentProtocol):
         self._cmd_dict.add(Capability.CLOCK_SYNC, display_name="synchronize clock")
 
     def _build_param_dict(self):
-        """
-        Populate the parameter dictionary with XR-420 parameters.
-        For each parameter key add value formatting function for set commands.
-        """
-        # The parameter dictionary.
-        self._param_dict = ProtocolParameterDict()
-
-        # Add parameter handlers to parameter dictionary for instrument configuration parameters.
-        self._param_dict.add(Parameter.FLUSH_VOLUME,
-                             r'Flush Volume: (.*)mL',
-                             None,
-                             self._int_to_string,
-                             type=ParameterDictType.INT,
-                             # default_value=150,
-                             default_value=10,  # djm - fast test value
-                             units='mL',
-                             startup_param=True,
-                             display_name="flush_volume",
-                             visibility=ParameterDictVisibility.IMMUTABLE)
-        self._param_dict.add(Parameter.FLUSH_FLOWRATE,
-                             r'Flush Flow Rate: (.*)mL/min',
-                             None,
-                             self._int_to_string,
-                             type=ParameterDictType.INT,
-                             default_value=100,
-                             units='mL/min',
-                             startup_param=True,
-                             display_name="flush_flow_rate",
-                             visibility=ParameterDictVisibility.IMMUTABLE)
-        self._param_dict.add(Parameter.FLUSH_MINFLOW,
-                             r'Flush Min Flow: (.*)mL/min',
-                             None,
-                             self._int_to_string,
-                             type=ParameterDictType.INT,
-                             default_value=75,
-                             units='mL/min',
-                             startup_param=True,
-                             display_name="flush_min_flow",
-                             visibility=ParameterDictVisibility.IMMUTABLE)
-        self._param_dict.add(Parameter.FILL_VOLUME,
-                             r'Fill Volume: (.*)mL',
-                             None,
-                             self._int_to_string,
-                             type=ParameterDictType.INT,
-                             # default_value=4000,
-                             default_value=10,  # djm - fast test value
-                             units='mL',
-                             startup_param=True,
-                             display_name="fill_volume",
-                             visibility=ParameterDictVisibility.IMMUTABLE)
-        self._param_dict.add(Parameter.FILL_FLOWRATE,
-                             r'Fill Flow Rate: (.*)mL/min',
-                             None,
-                             self._int_to_string,
-                             type=ParameterDictType.INT,
-                             default_value=100,
-                             units='mL/min',
-                             startup_param=True,
-                             display_name="fill_flow_rate",
-                             visibility=ParameterDictVisibility.IMMUTABLE)
-        self._param_dict.add(Parameter.FILL_MINFLOW,
-                             r'Fill Min Flow: (.*)mL/min',
-                             None,
-                             self._int_to_string,
-                             type=ParameterDictType.INT,
-                             default_value=75,
-                             units='mL/min',
-                             startup_param=True,
-                             display_name="fill_min_flow",
-                             visibility=ParameterDictVisibility.IMMUTABLE)
-        self._param_dict.add(Parameter.CLEAR_VOLUME,
-                             r'Reverse Volume: (.*)mL',
-                             None,
-                             self._int_to_string,
-                             type=ParameterDictType.INT,
-                             # default_value=100,
-                             default_value=10,  # djm - fast test value
-                             units='mL',
-                             startup_param=True,
-                             display_name="clear_volume",
-                             visibility=ParameterDictVisibility.IMMUTABLE)
-        self._param_dict.add(Parameter.CLEAR_FLOWRATE,
-                             r'Reverse Flow Rate: (.*)mL/min',
-                             None,
-                             self._int_to_string,
-                             type=ParameterDictType.INT,
-                             default_value=100,
-                             units='mL/min',
-                             startup_param=True,
-                             display_name="clear_flow_rate",
-                             visibility=ParameterDictVisibility.IMMUTABLE)
-        self._param_dict.add(Parameter.CLEAR_MINFLOW,
-                             r'Reverse Min Flow: (.*)mL/min',
-                             None,
-                             self._int_to_string,
-                             type=ParameterDictType.INT,
-                             default_value=75,
-                             units='mL/min',
-                             startup_param=True,
-                             display_name="clear_min_flow",
-                             visibility=ParameterDictVisibility.IMMUTABLE)
+        raise NotImplemented('must be implemented by child class')
 
     def _update_params(self):
         """

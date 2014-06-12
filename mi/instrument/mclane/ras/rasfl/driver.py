@@ -16,7 +16,6 @@ import re
 from mi.core.instrument.instrument_driver import SingleConnectionInstrumentDriver
 from mi.core.log import get_logger
 from mi.core.instrument.protocol_param_dict import \
-    ProtocolParameterDict, \
     ParameterDictType, \
     ParameterDictVisibility
 from mi.instrument.mclane.driver import \
@@ -189,9 +188,6 @@ class Protocol(McLaneProtocol):
         Populate the parameter dictionary with XR-420 parameters.
         For each parameter key add value formatting function for set commands.
         """
-        # The parameter dictionary.
-        self._param_dict = ProtocolParameterDict()
-
         # Add parameter handlers to parameter dictionary for instrument configuration parameters.
         self._param_dict.add(Parameter.FLUSH_VOLUME,
                              r'Flush Volume: (.*)mL',
@@ -199,6 +195,7 @@ class Protocol(McLaneProtocol):
                              self._int_to_string,
                              type=ParameterDictType.INT,
                              default_value=FLUSH_VOLUME,
+                             value=FLUSH_VOLUME,
                              units='mL',
                              startup_param=True,
                              display_name="flush_volume",
@@ -209,6 +206,7 @@ class Protocol(McLaneProtocol):
                              self._int_to_string,
                              type=ParameterDictType.INT,
                              default_value=FLUSH_RATE,
+                             value=FLUSH_RATE,
                              units='mL/min',
                              startup_param=True,
                              display_name="flush_flow_rate",
@@ -219,6 +217,7 @@ class Protocol(McLaneProtocol):
                              self._int_to_string,
                              type=ParameterDictType.INT,
                              default_value=FLUSH_MIN_RATE,
+                             value=FLUSH_MIN_RATE,
                              units='mL/min',
                              startup_param=True,
                              display_name="flush_min_flow",
@@ -229,6 +228,7 @@ class Protocol(McLaneProtocol):
                              self._int_to_string,
                              type=ParameterDictType.INT,
                              default_value=FILL_VOLUME,
+                             value=FILL_VOLUME,
                              units='mL',
                              startup_param=True,
                              display_name="fill_volume",
@@ -239,6 +239,7 @@ class Protocol(McLaneProtocol):
                              self._int_to_string,
                              type=ParameterDictType.INT,
                              default_value=FILL_RATE,
+                             value=FILL_RATE,
                              units='mL/min',
                              startup_param=True,
                              display_name="fill_flow_rate",
@@ -249,6 +250,7 @@ class Protocol(McLaneProtocol):
                              self._int_to_string,
                              type=ParameterDictType.INT,
                              default_value=FILL_MIN_RATE,
+                             value=FILL_MIN_RATE,
                              units='mL/min',
                              startup_param=True,
                              display_name="fill_min_flow",
@@ -259,6 +261,7 @@ class Protocol(McLaneProtocol):
                              self._int_to_string,
                              type=ParameterDictType.INT,
                              default_value=CLEAR_VOLUME,
+                             value=CLEAR_VOLUME,
                              units='mL',
                              startup_param=True,
                              display_name="clear_volume",
@@ -269,6 +272,7 @@ class Protocol(McLaneProtocol):
                              self._int_to_string,
                              type=ParameterDictType.INT,
                              default_value=CLEAR_RATE,
+                             value=CLEAR_RATE,
                              units='mL/min',
                              startup_param=True,
                              display_name="clear_flow_rate",
@@ -279,17 +283,8 @@ class Protocol(McLaneProtocol):
                              self._int_to_string,
                              type=ParameterDictType.INT,
                              default_value=CLEAR_MIN_RATE,
+                             value=CLEAR_MIN_RATE,
                              units='mL/min',
                              startup_param=True,
                              display_name="clear_min_flow",
                              visibility=ParameterDictVisibility.IMMUTABLE)
-
-        self._param_dict.set_value(Parameter.FLUSH_VOLUME, FLUSH_VOLUME)
-        self._param_dict.set_value(Parameter.FLUSH_FLOWRATE, FLUSH_RATE)
-        self._param_dict.set_value(Parameter.FLUSH_MINFLOW, FLUSH_MIN_RATE)
-        self._param_dict.set_value(Parameter.FILL_VOLUME, FILL_VOLUME)
-        self._param_dict.set_value(Parameter.FILL_FLOWRATE, FILL_RATE)
-        self._param_dict.set_value(Parameter.FILL_MINFLOW, FILL_MIN_RATE)
-        self._param_dict.set_value(Parameter.CLEAR_VOLUME, CLEAR_VOLUME)
-        self._param_dict.set_value(Parameter.CLEAR_FLOWRATE, CLEAR_RATE)
-        self._param_dict.set_value(Parameter.CLEAR_MINFLOW, CLEAR_MIN_RATE)

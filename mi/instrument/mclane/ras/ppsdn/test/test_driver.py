@@ -198,16 +198,6 @@ class UtilMixin(DriverTestMixin):
         self.assert_data_particle_header(data_particle, DataParticleType.PPSDN_PARSED)
         self.assert_data_particle_parameters(data_particle, self._sample_parameters, verify_values)
 
-    # TODO - need to define status particle values
-    def assert_data_particle_status(self, data_particle, verify_values=False):
-        """
-        Verify a PPSDN pump status data particle
-        @param data_particle: PPSDN_StatusDataParticle data particle
-        @param verify_values: bool, should we verify parameter values
-        """
-        # self.assert_data_particle_header(data_particle, DataParticleType.PPSDN_STATUS)
-        # self.assert_data_particle_parameters(data_particle, self._status_parameters, verify_values)
-
     def assert_time_synched(self, pps_time, tolerance=5):
         """
         Verify the retrieved time is within acceptable tolerance
