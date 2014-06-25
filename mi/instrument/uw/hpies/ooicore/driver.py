@@ -40,6 +40,7 @@ from mi.core.instrument.chunker import StringChunker
 
 
 
+
 # newline.
 NEWLINE = '\r\n'
 log = get_logger()
@@ -472,14 +473,14 @@ class DataHeaderParticle(HPIESDataParticle):
         @return regex string for matching HPIES data header particle
 
         Sample Data:
-        #3__HE04 E a 0 983 130 3546345513 13126 3 3 3 1398912144*f7a9
-        #3__HE04 f a 0 382 0 3546329882 17917 3 3 3 1398896422*d6fd
-        #3__HE04 C a 0 978 22 3546332553 34259 3 3 3 1398899184*3e0d
+        #3__HE05 E a 0 983 130 3546345513 13126 3 3 3 1398912144*f7aa
+        #3__HE05 f a 0 382 0 3546329882 17917 3 3 3 1398896422*d6fe
+        #3__HE05 C a 0 978 22 3546332553 34259 3 3 3 1398899184*3e0e
         """
         pattern = r"""
             (?x)
             \#3__HE
-            (?P<version>  \d{2})    \s  (?# 04)
+            (?P<version>  \d{2})    \s  (?# 05)
             (?P<type>     ([ECfr])) \s  (?# E)
             (?P<dest>     ([ab]))   \s  (?# a)
             (?P<ibegin>   %(int)s)  \s  (?# 0)
@@ -519,10 +520,12 @@ class HEFDataParticleKey(BaseEnum):
     Horizontal Electrical Field data stream
     """
     INDEX = 'index'
-    CHANNEL_1 = 'e1a'
-    CHANNEL_2 = 'e1b'
-    CHANNEL_3 = 'e2a'
-    CHANNEL_4 = 'e2b'
+    CHANNEL_1 = 'e1c'
+    CHANNEL_2 = 'e1a'
+    CHANNEL_3 = 'e1b'
+    CHANNEL_4 = 'e2c'
+    CHANNEL_5 = 'e2a'
+    CHANNEL_6 = 'e2b'
 
 
 class HEFDataParticle(HPIESDataParticle):
@@ -543,7 +546,9 @@ class HEFDataParticle(HPIESDataParticle):
             (?P<channel_1> %(int)s) \s
             (?P<channel_2> %(int)s) \s
             (?P<channel_3> %(int)s) \s
-            (?P<channel_4> %(int)s)
+            (?P<channel_4> %(int)s) \s
+            (?P<channel_5> %(int)s) \s
+            (?P<channel_6> %(int)s)
                            \*
             (?P<crc>       %(crc)s)
             """ % common_matches
@@ -563,6 +568,8 @@ class HEFDataParticle(HPIESDataParticle):
             self._encode_value(HEFDataParticleKey.CHANNEL_2, self.match.group('channel_2'), int),
             self._encode_value(HEFDataParticleKey.CHANNEL_3, self.match.group('channel_3'), int),
             self._encode_value(HEFDataParticleKey.CHANNEL_4, self.match.group('channel_4'), int),
+            self._encode_value(HEFDataParticleKey.CHANNEL_5, self.match.group('channel_5'), int),
+            self._encode_value(HEFDataParticleKey.CHANNEL_6, self.match.group('channel_6'), int),
         ]
 
 

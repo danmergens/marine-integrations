@@ -147,11 +147,11 @@ class UtilMixin(DriverTestMixin):
     STATES = ParameterTestConfigKey.STATES
 
     # Sample raw data particles
-    SAMPLE_HEF_HEADER = "#3__HE04 E a 0 985 2 3546330153 3113 3 3 3 1398896784*1bbb"
-    SAMPLE_HEF = '#3__DE 797 79380 192799 192803 192930*56a8'
-    SAMPLE_MOTOR_HEADER = '#3__HE04 f a 0 382 0 3546329882 17917 3 3 3 1398896422*d6fd'
+    SAMPLE_HEF_HEADER = "#3__HE05 E a 0 985 2 3546330153 3113 3 3 3 1398896784*1bbc"
+    SAMPLE_HEF = '#3__DE 1159 396997 397259 397512 397260 396951 397701*d595'
+    SAMPLE_MOTOR_HEADER = '#3__HE05 f a 0 382 0 3546329882 17917 3 3 3 1398896422*d6fe'
     SAMPLE_MOTOR = '#3__DM 11 24425*396b'
-    SAMPLE_CAL_HEADER = '#3__HE04 E a 0 983 130 3546345513 13126 3 3 3 1398912144*f7a9'
+    SAMPLE_CAL_HEADER = '#3__HE05 E a 0 983 130 3546345513 13126 3 3 3 1398912144*f7aa'
     SAMPLE_CAL = '#3__DC 2 192655 192637 135611 80036 192554 192644*5c28'
     SAMPLE_HPIES_STATUS = \
         '#3__s1 -748633661 31 23 0 C:\\DATA\\12345.000 OK*3e90' + NEWLINE + \
@@ -318,6 +318,8 @@ class UtilMixin(DriverTestMixin):
         HEFDataParticleKey.CHANNEL_2: {TYPE: int, VALUE: 0, REQUIRED: True},
         HEFDataParticleKey.CHANNEL_3: {TYPE: int, VALUE: 0, REQUIRED: True},
         HEFDataParticleKey.CHANNEL_4: {TYPE: int, VALUE: 0, REQUIRED: True},
+        HEFDataParticleKey.CHANNEL_5: {TYPE: int, VALUE: 0, REQUIRED: True},
+        HEFDataParticleKey.CHANNEL_6: {TYPE: int, VALUE: 0, REQUIRED: True},
     }
 
     def assert_hef_particle(self, particle, verify_values=False):
