@@ -41,6 +41,7 @@ from mi.core.instrument.chunker import StringChunker
 
 
 
+
 # newline.
 NEWLINE = '\r\n'
 log = get_logger()
@@ -1213,7 +1214,7 @@ class Protocol(CommandResponseInstrumentProtocol):
                              startup_param=True,
                              direct_access=True)
         self._param_dict.add(Parameter.WSRUN_PINCH,
-                             r'#3_ wsrun pinch secs\s+= (%(int)s) s -- half cycle duration' % common_matches,
+                             r'#3_ wsrun pinch secs\s+= (%(int)s)' % common_matches,
                              lambda match: int(match.group(1)),
                              None,
                              type=ParameterDictType.INT,
@@ -1223,7 +1224,7 @@ class Protocol(CommandResponseInstrumentProtocol):
                              startup_param=True,
                              direct_access=True)
         self._param_dict.add(Parameter.NFC_CALIBRATE,
-                             r'#3_ nfc calibrate\s+= (%(int)s) full cycles -- calibrate every 2880 s' % common_matches,
+                             r'#3_ nfc calibrate\s+= (%(int)s)' % common_matches,
                              lambda match: int(match.group(1)),
                              None,
                              type=ParameterDictType.INT,
@@ -1234,7 +1235,7 @@ class Protocol(CommandResponseInstrumentProtocol):
                              startup_param=True,
                              direct_access=True)
         self._param_dict.add(Parameter.CAL_HOLD,
-                             r'#3_ cal hold secs\s+= (%(float)s) s' % common_matches,
+                             r'#3_ cal hold secs\s+= (%(float)s)' % common_matches,
                              lambda match: float(match.group(1)),
                              None,
                              type=ParameterDictType.FLOAT,
@@ -1245,7 +1246,7 @@ class Protocol(CommandResponseInstrumentProtocol):
                              startup_param=True,
                              direct_access=True)
         self._param_dict.add(Parameter.CAL_SKIP,
-                             r'#3_ cal skip secs\s+= (%(int)s) s' % common_matches,
+                             r'#3_ cal skip secs\s+= (%(int)s)' % common_matches,
                              lambda match: int(match.group(1)),
                              None,
                              type=ParameterDictType.INT,
@@ -1256,7 +1257,7 @@ class Protocol(CommandResponseInstrumentProtocol):
                              startup_param=False,
                              direct_access=False)
         self._param_dict.add(Parameter.NHC_COMPASS,
-                             r'#3_ nhc compass\s+= (%(int)s) half cycles' % common_matches,
+                             r'#3_ nhc compass\s+= (%(int)s)' % common_matches,
                              lambda match: int(match.group(1)),
                              None,
                              type=ParameterDictType.INT,
@@ -1278,7 +1279,7 @@ class Protocol(CommandResponseInstrumentProtocol):
                              visibility=ParameterDictVisibility.READ_WRITE)
         # time between measurements in a burst
         self._param_dict.add(Parameter.COMPASS_DELAY,
-                             r'#3_ compass dsecs\s+= (%(int)s) s' % common_matches,
+                             r'#3_ compass dsecs\s+= (%(int)s)' % common_matches,
                              lambda match: int(match.group(1)),
                              None,
                              type=ParameterDictType.INT,
@@ -1290,7 +1291,7 @@ class Protocol(CommandResponseInstrumentProtocol):
                              visibility=ParameterDictVisibility.READ_WRITE)
         # initial compass measurement (in seconds)
         self._param_dict.add(Parameter.INITIAL_COMPASS,
-                             r'#3_ icompass run secs\s+= (%(int)s) s' % common_matches,
+                             r'#3_ icompass run secs\s+= (%(int)s)' % common_matches,
                              lambda match: int(match.group(1)),
                              None,
                              type=ParameterDictType.INT,
@@ -1302,7 +1303,7 @@ class Protocol(CommandResponseInstrumentProtocol):
                              visibility=ParameterDictVisibility.READ_ONLY)
         # INITIAL_COMPASS_DELAY = 'icompass dsecs'  #
         self._param_dict.add(Parameter.INITIAL_COMPASS_DELAY,
-                             r'#3_ icompass dsecs\s+= (%(float)s) s' % common_matches,
+                             r'#3_ icompass dsecs\s+= (%(float)s)' % common_matches,
                              lambda match: float(match.group(1)),
                              None,
                              type=ParameterDictType.INT,
@@ -1313,7 +1314,7 @@ class Protocol(CommandResponseInstrumentProtocol):
                              visibility=ParameterDictVisibility.READ_ONLY)
         # FILE_LENGTH = 'secs per ofile'  # seconds per file (default 86400 - one day)
         self._param_dict.add(Parameter.MOTOR_SAMPLES,
-                             r'#3_ navg mot\s+= (%(int)s) --' % common_matches,
+                             r'#3_ navg mot\s+= (%(int)s)' % common_matches,
                              lambda match: int(match.group(1)),
                              None,
                              type=ParameterDictType.INT,
@@ -1323,7 +1324,7 @@ class Protocol(CommandResponseInstrumentProtocol):
                              direct_access=True,
                              visibility=ParameterDictVisibility.READ_WRITE)
         self._param_dict.add(Parameter.EF_SAMPLES,
-                             r'#3_ navg ef\s+= (%(int)s) --' % common_matches,
+                             r'#3_ navg ef\s+= (%(int)s)' % common_matches,
                              lambda match: int(match.group(1)),
                              None,
                              type=ParameterDictType.INT,
@@ -1333,7 +1334,7 @@ class Protocol(CommandResponseInstrumentProtocol):
                              direct_access=True,
                              visibility=ParameterDictVisibility.READ_WRITE)
         self._param_dict.add(Parameter.CAL_SAMPLES,
-                             r'#3_ navg cal\s+= (%(int)s) --' % common_matches,
+                             r'#3_ navg cal\s+= (%(int)s)' % common_matches,
                              lambda match: int(match.group(1)),
                              None,
                              type=ParameterDictType.INT,
@@ -1344,7 +1345,7 @@ class Protocol(CommandResponseInstrumentProtocol):
                              visibility=ParameterDictVisibility.READ_WRITE)
         self._param_dict.add(
             Parameter.CONSOLE_TIMEOUT,
-            r'#3_ console off timeout\s+= (%(int)s) s' % common_matches,
+            r'#3_ console off timeout\s+= (%(int)s)' % common_matches,
             lambda match: int(match.group(1)),
             None,
             type=ParameterDictType.INT,
@@ -1354,7 +1355,7 @@ class Protocol(CommandResponseInstrumentProtocol):
             direct_access=True,
             visibility=ParameterDictVisibility.IMMUTABLE)
         self._param_dict.add(Parameter.WSRUN_DELAY,
-                             r'#3_ wsrun delay secs\s+= (%(int)s) s' % common_matches,
+                             r'#3_ wsrun delay secs\s+= (%(int)s)' % common_matches,
                              lambda match: int(match.group(1)),
                              None,
                              type=ParameterDictType.INT,
@@ -1500,7 +1501,7 @@ class Protocol(CommandResponseInstrumentProtocol):
                              direct_access=False,
                              visibility=ParameterDictVisibility.READ_ONLY)
         self._param_dict.add(Parameter.ECHO_SAMPLES,
-                             r'Travel Time Measurements: (%(int)s) pings every 10 minutes' % common_matches,
+                             r'Travel Time Measurements: (%(int)s)' % common_matches,
                              lambda match: int(match.group(1)),
                              None,
                              type=ParameterDictType.INT,
@@ -1512,7 +1513,7 @@ class Protocol(CommandResponseInstrumentProtocol):
                              direct_access=False,
                              visibility=ParameterDictVisibility.READ_ONLY)
         self._param_dict.add(Parameter.WATER_DEPTH,
-                             r'Estimated Water Depth: (%(int)s) meters' % common_matches,
+                             r'Estimated Water Depth: (%(int)s)' % common_matches,
                              lambda match: int(match.group(1)),
                              None,
                              type=ParameterDictType.INT,
@@ -1522,7 +1523,7 @@ class Protocol(CommandResponseInstrumentProtocol):
                              direct_access=False,
                              visibility=ParameterDictVisibility.READ_ONLY)
         self._param_dict.add(Parameter.ACOUSTIC_LOCKOUT,
-                             r'Acoustic Lockout: (%(float)s) seconds' % common_matches,
+                             r'Acoustic Lockout: (%(float)s)' % common_matches,
                              lambda match: float(match.group(1)),
                              None,
                              type=ParameterDictType.FLOAT,
@@ -1533,7 +1534,7 @@ class Protocol(CommandResponseInstrumentProtocol):
                              direct_access=False,
                              visibility=ParameterDictVisibility.READ_ONLY)
         self._param_dict.add(Parameter.ACOUSTIC_OUTPUT,
-                             r'Acoustic Output: (%(int)s) dB' % common_matches,
+                             r'Acoustic Output: (%(int)s)' % common_matches,
                              lambda match: int(match.group(1)),
                              None,
                              type=ParameterDictType.FLOAT,
@@ -1574,7 +1575,7 @@ class Protocol(CommandResponseInstrumentProtocol):
                              direct_access=False,
                              visibility=ParameterDictVisibility.READ_ONLY)
         self._param_dict.add(Parameter.PT_SAMPLES,
-                             r'Pressure and Temperature measured every (%(int)s) minutes' % common_matches,
+                             r'Pressure and Temperature measured every (%(int)s)' % common_matches,
                              lambda match: int(match.group(1)),
                              None,
                              type=ParameterDictType.INT,
@@ -1917,17 +1918,8 @@ class Protocol(CommandResponseInstrumentProtocol):
                 if valid_response(line):
                     log.trace('checksum valid, setting value')
                     param_lines.append(line)
-        found = self._param_dict.update(format(NEWLINE.join(param_lines)))
-
-        if not found:
-            log.debug('unable to match parameters')
-
-        log.debug('parameter update complete: \n%r' % self._param_dict.get_all())
-
-        if Parameter.SERIAL in response:  # first parameter
-            log.debug('received parameter listing, updating parameters')
-            # dict = self._param_dict.update_many(response)
-            self._param_dict.update_many(response)
+        dictionary = self._param_dict.update_many(response)
+        if dictionary:
             return True
 
         return False
@@ -1994,16 +1986,13 @@ class Protocol(CommandResponseInstrumentProtocol):
         @param prompt - ??
         @retval value from set or None if there was an error setting value
         """
-        value = None
         try:
             self._check_command(response, prompt)
-            matches = re.search(Response.SET_PARAMETER, response)
-            if matches:
-                value = matches.group(1)
+            self._param_dict.update(response)
         except InstrumentProtocolException:
             pass
 
-        return value
+        return response
 
     ########################################################################
     # Unknown handlers
@@ -2152,18 +2141,11 @@ class Protocol(CommandResponseInstrumentProtocol):
     ########################################################################
 
     def _handler_direct_access_enter(self):
-        """
-        Enter direct access state.
-        """
-        # Tell driver superclass to send a state change event.
-        # Superclass will query the state.
         self._driver_event(DriverAsyncEvent.STATE_CHANGE)
 
         self._sent_cmds = []
 
     def _handler_direct_access_execute_direct(self, data):
-        """
-        """
         self._do_cmd_direct(data)
 
         # add sent command to list for 'echo' filtering in callback
@@ -2172,19 +2154,9 @@ class Protocol(CommandResponseInstrumentProtocol):
         return None, (None, None)
 
     def _handler_direct_access_stop_direct(self):
-        """
-        """
         return ProtocolState.COMMAND, (ResourceAgentState.COMMAND, None)
 
     def _handler_direct_access_exit(self):
-        """
-        Exit direct access state. Restore direct access parameters.
-        """
-        for key in self.get_direct_access_params():
-            value = self._param_dict.get_default_value(key)
-            log.debug('restoring parameter: %r - %r', key, value)
-            self._param_dict.set_default(key)
-        # TODO - self._update_params()
         pass
 
     def apply_startup_params(self):
@@ -2294,8 +2266,8 @@ class Protocol(CommandResponseInstrumentProtocol):
             constraint_key = parameters.get(key)
             if constraint_key in constraints:
                 var_type, minimum, maximum = constraints[constraint_key]
-                constraint_string = 'Parameter: %s Value: %s Type: %s Minimum: %s Maximum: %s' % \
-                                    (key, val, var_type, minimum, maximum)
+                constraint_string = 'Parameter: %s Value: %s Type: %s Real Type: %s Minimum: %s Maximum: %s' % \
+                                    (key, val, var_type, type(val), minimum, maximum)
                 log.debug('SET CONSTRAINT: %s', constraint_string)
                 # check bool values are actual booleans
                 if var_type == bool:
@@ -2304,7 +2276,7 @@ class Protocol(CommandResponseInstrumentProtocol):
                 # else, check if we can cast to the correct type
                 else:
                     try:
-                        var_type(val)
+                        val = var_type(val)
                     except ValueError:
                         raise InstrumentParameterException('Type mismatch: %s' % constraint_string)
                     # now, verify we are within min/max
@@ -2327,9 +2299,7 @@ class Protocol(CommandResponseInstrumentProtocol):
 
         for key, val in params.iteritems():
             if key in old_config:
-                value = self._do_cmd_resp(key, val, expected_prompt=Prompt.HEF_PROMPT)
-                if value is not None:
-                    self._param_dict.set_value(key, value)
+                self._do_cmd_resp(key, val, expected_prompt=Prompt.HEF_PROMPT)
             else:
                 raise InstrumentParameterException('attempted to set unknown parameter: %s to %s' % (key, val))
 
