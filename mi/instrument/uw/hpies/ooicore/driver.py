@@ -7,6 +7,7 @@ Release notes:
 
 initial_rev
 """
+
 __author__ = 'Dan Mergens'
 __license__ = 'Apache 2.0'
 
@@ -28,15 +29,12 @@ from mi.core.log import \
 from mi.core.common import BaseEnum, Units
 from mi.core.instrument.instrument_protocol import CommandResponseInstrumentProtocol
 from mi.core.instrument.instrument_fsm import ThreadSafeFSM
-from mi.core.instrument.instrument_driver import SingleConnectionInstrumentDriver
-from mi.core.instrument.instrument_driver import DriverEvent
-from mi.core.instrument.instrument_driver import DriverAsyncEvent
-from mi.core.instrument.instrument_driver import DriverProtocolState
-from mi.core.instrument.instrument_driver import DriverParameter
-from mi.core.instrument.instrument_driver import ResourceAgentState
+from mi.core.instrument.instrument_driver import \
+    SingleConnectionInstrumentDriver, DriverEvent, DriverAsyncEvent, DriverProtocolState, DriverParameter, \
+    ResourceAgentState
 from mi.core.instrument.data_particle import CommonDataParticleType, DataParticleKey, DataParticle, DataParticleValue
 from mi.core.instrument.chunker import StringChunker
-from mi.instrument.uw.hpies.ooicore.crclib import crc3kerm
+from mi.instrument.uw.hpies.crclib import crc3kerm
 
 
 

@@ -3,7 +3,7 @@ __author__ = 'John Dunlap'
 
 def crc3kerm(buf):
     """
-    Compute the Kermit checksum on a line of data
+    Compute the Kermit checksum on @a buf
     """
     crcta = [0, 4225, 8450, 12675, 16900, 21125, 25350, 29575,
              33800, 38025, 42250, 46475, 50700, 54925, 59150, 63375]

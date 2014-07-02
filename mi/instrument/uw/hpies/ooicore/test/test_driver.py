@@ -12,10 +12,6 @@ USAGE:
        $ bin/test_driver -i [-t testname]
        $ bin/test_driver -q [-t testname]
 """
-from mi.core.exceptions import SampleException, InstrumentCommandException
-from mi.core.instrument.data_particle import DataParticleKey, DataParticleValue
-from mi.core.instrument.instrument_driver import DriverProtocolState, ResourceAgentState, DriverConfigKey
-
 __author__ = 'Dan Mergens'
 __license__ = 'Apache 2.0'
 
@@ -24,42 +20,27 @@ import unittest
 
 from nose.plugins.attrib import attr
 from mock import Mock
-
 from mi.core.log import get_logger
+
 
 log = get_logger()
 
 # MI imports.
-from mi.idk.unit_test import InstrumentDriverTestCase, ParameterTestConfigKey, AgentCapabilityType
-from mi.idk.unit_test import InstrumentDriverUnitTestCase
-from mi.idk.unit_test import InstrumentDriverIntegrationTestCase
-from mi.idk.unit_test import InstrumentDriverQualificationTestCase
-from mi.idk.unit_test import DriverTestMixin
+from mi.idk.unit_test import \
+    InstrumentDriverTestCase, ParameterTestConfigKey, AgentCapabilityType, InstrumentDriverUnitTestCase, \
+    InstrumentDriverIntegrationTestCase, InstrumentDriverQualificationTestCase, DriverTestMixin
 
-# from interface.objects import AgentCommand
-#
-# from mi.core.instrument.logger_client import LoggerClient
-
+from mi.core.instrument.data_particle import DataParticleKey, DataParticleValue
+from mi.core.instrument.instrument_driver import DriverProtocolState, ResourceAgentState, DriverConfigKey
 from mi.core.instrument.chunker import StringChunker
-# from mi.core.instrument.instrument_driver import DriverAsyncEvent
-# from mi.core.instrument.instrument_driver import DriverConnectionState
-# from mi.core.instrument.instrument_driver import DriverProtocolState
-#
-# from ion.agents.instrument.instrument_agent import InstrumentAgentState
-# from ion.agents.instrument.direct_access.direct_access_server import DirectAccessTypes
+from mi.core.exceptions import SampleException, InstrumentCommandException
 
-from mi.instrument.uw.hpies.ooicore.driver import InstrumentDriver, HEFDataParticle, ParameterConstraints, \
-    HEFMotorCurrentParticleKey, HEFDataParticleKey, CalStatusParticleKey, HEFStatusParticleKey, IESDataParticleKey, \
-    DataHeaderParticleKey
-from mi.instrument.uw.hpies.ooicore.driver import DataParticleType
-from mi.instrument.uw.hpies.ooicore.driver import Command
-from mi.instrument.uw.hpies.ooicore.driver import ProtocolState
-from mi.instrument.uw.hpies.ooicore.driver import ProtocolEvent
-from mi.instrument.uw.hpies.ooicore.driver import Capability
-from mi.instrument.uw.hpies.ooicore.driver import Parameter
-from mi.instrument.uw.hpies.ooicore.driver import Protocol
-from mi.instrument.uw.hpies.ooicore.driver import Prompt
-from mi.instrument.uw.hpies.ooicore.driver import NEWLINE
+from mi.instrument.uw.hpies.ooicore.driver import \
+    InstrumentDriver, HEFDataParticle, ParameterConstraints, HEFMotorCurrentParticleKey, HEFDataParticleKey, \
+    CalStatusParticleKey, HEFStatusParticleKey, IESDataParticleKey, DataHeaderParticleKey
+from mi.instrument.uw.hpies.ooicore.driver import \
+    DataParticleType, Command, ProtocolState, ProtocolEvent, Capability, Parameter, Protocol, Prompt, \
+    NEWLINE
 
 # ##
 # Driver parameters for the tests
