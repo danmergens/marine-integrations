@@ -7,6 +7,7 @@ Release notes:
 
 initial_rev
 """
+import time
 
 __author__ = 'Dan Mergens'
 __license__ = 'Apache 2.0'
@@ -2024,6 +2025,8 @@ class Protocol(CommandResponseInstrumentProtocol):
     def _handler_unknown_discover(self, *args, **kwargs):
         # any existing mission needs to be stopped. If one is not already running, no harm in sending the stop.
         self._do_cmd_no_resp(Command.MISSION_STOP)
+        # delay so the instrument doesn't overwrite the next response
+        time.sleep(2)
 
         return ProtocolState.COMMAND, ResourceAgentState.IDLE
 

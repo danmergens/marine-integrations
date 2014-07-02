@@ -702,6 +702,18 @@ class DriverQualificationTest(InstrumentDriverQualificationTestCase, UtilMixin):
         self.assert_discover(ResourceAgentState.COMMAND)
         self.assert_reset()
 
+    def test_direct_access_telnet_closed(self):
+        """
+        Test that we can properly handle the situation when a direct access
+        session is launched, the telnet is closed, then direct access is stopped.
+        Overridden so to allow for degraded internet connection speed.
+        """
+        self.assert_enter_command_mode()
+        self.assert_direct_access_start_telnet(timeout=600)
+        self.assertTrue(self.tcp_client)
+        self.tcp_client.disconnect()
+        self.assert_state_change(ResourceAgentState.COMMAND, DriverProtocolState.COMMAND, 100)
+
     def test_direct_access_telnet_mode(self):
         """
         @brief This test manually tests that the Instrument Driver properly supports direct access to the physical
