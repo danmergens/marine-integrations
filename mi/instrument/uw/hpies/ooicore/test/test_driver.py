@@ -76,7 +76,7 @@ InstrumentDriverTestCase.initialize(
         Parameter.DEBUG_LEVEL: 0,
         Parameter.WSRUN_PINCH: 120,
         Parameter.NFC_CALIBRATE: 60,
-        Parameter.CAL_HOLD: 20,
+        Parameter.CAL_HOLD: 19.97,
         Parameter.NHC_COMPASS: 122,
         Parameter.COMPASS_SAMPLES: 1,
         Parameter.COMPASS_DELAY: 10,
@@ -87,7 +87,7 @@ InstrumentDriverTestCase.initialize(
         Parameter.WSRUN_DELAY: 0,
         Parameter.MOTOR_DIR_NHOLD: 0,
         Parameter.MOTOR_DIR_INIT: 'f',
-        Parameter.POWER_COMPASS_W_MOTOR: True,
+        Parameter.POWER_COMPASS_W_MOTOR: False,
         Parameter.KEEP_AWAKE_W_MOTOR: True,
         Parameter.MOTOR_TIMEOUTS_1A: 200,
         Parameter.MOTOR_TIMEOUTS_1B: 200,
@@ -207,9 +207,9 @@ class UtilMixin(DriverTestMixin):
         Parameter.NFC_CALIBRATE:
             {TYPE: int, READONLY: False, DA: True, STARTUP: True, VALUE: 60, REQUIRED: False},
         Parameter.CAL_HOLD:
-            {TYPE: float, READONLY: True, DA: True, STARTUP: True, VALUE: 20, REQUIRED: False},
+            {TYPE: float, READONLY: True, DA: True, STARTUP: True, VALUE: 19.97, REQUIRED: False},
         Parameter.CAL_SKIP:
-            {TYPE: int, READONLY: True, DA: False, STARTUP: False, VALUE: 10, REQUIRED: False},
+            {TYPE: int, READONLY: True, DA: False, STARTUP: False, VALUE: 19.97, REQUIRED: False},
         Parameter.NHC_COMPASS:
             {TYPE: int, READONLY: False, DA: True, STARTUP: True, VALUE: 122, REQUIRED: False},
         Parameter.COMPASS_SAMPLES:
@@ -253,7 +253,7 @@ class UtilMixin(DriverTestMixin):
         Parameter.M1A_LED:
             {TYPE: int, READONLY: True, DA: True, STARTUP: True, VALUE: 1, REQUIRED: False},
         Parameter.M2A_LED:
-            {TYPE: int, READONLY: True, DA: True, STARTUP: True, VALUE: 1, REQUIRED: False},
+            {TYPE: int, READONLY: True, DA: True, STARTUP: True, VALUE: 3, REQUIRED: False},
         # IES parameters
         Parameter.IES_TIME:
             {TYPE: str, READONLY: True, DA: False, STARTUP: False, VALUE: '', REQUIRED: False},
@@ -603,7 +603,7 @@ class DriverIntegrationTest(InstrumentDriverIntegrationTestCase, UtilMixin):
         self.assert_initialize_driver(DriverProtocolState.AUTOSAMPLE)
 
         self.assert_async_particle_generation(
-            DataParticleType.ECHO_SOUNDING, self.assert_echo_particle, timeout=60)
+            DataParticleType.ECHO_SOUNDING, self.assert_echo_particle, timeout=600)
         self.assert_async_particle_generation(
             DataParticleType.HPIES_STATUS, self.assert_data_particle_sample, timeout=30)
 
@@ -682,6 +682,26 @@ class DriverQualificationTest(InstrumentDriverQualificationTestCase, UtilMixin):
     def setUp(self):
         InstrumentDriverQualificationTestCase.setUp(self)
 
+    def test_discover(self):
+        """
+        Overrides base class - instrument only goes into command mode, not autosample.
+        """
+        # Verify the agent is in command mode
+        self.assert_enter_command_mode()
+
+        # Now reset and try to discover.  This will stop the driver which holds the current
+        # instrument state.
+        self.assert_reset()
+        self.assert_discover(ResourceAgentState.COMMAND)
+
+        # Now put the instrument in streaming and reset the driver again.
+        self.assert_start_autosample()
+        self.assert_reset()
+
+        # When the driver reconnects it should be in command (we force a mission stop during discover)
+        self.assert_discover(ResourceAgentState.COMMAND)
+        self.assert_reset()
+
     def test_direct_access_telnet_mode(self):
         """
         @brief This test manually tests that the Instrument Driver properly supports direct access to the physical
@@ -691,9 +711,16 @@ class DriverQualificationTest(InstrumentDriverQualificationTestCase, UtilMixin):
         self.assert_direct_access_start_telnet()
         self.assertTrue(self.tcp_client)
 
-        ###
-        #   TODO - Add instrument specific code here.
-        ###
+        # set direct access parameters (these should be reset upon return from direct access)
+        self.tcp_client.send_data('dcpwm 1')  # read-only, direct access
+        self.tcp_client.expect_regex(' = ')
+
+        self.tcp_client.send_data('m1a_tmoc 30')  # read-write, direct access
+        self.tcp_client.expect_regex(' = ')
+
+        # without saving the parameters, the values will be reset on reboot (which is part of wakeup)
+        self.tcp_client.send_data('#3_params save')  # read-write, direct access
+        self.tcp_client.expect_regex('save\*')
 
         self.assert_direct_access_stop_telnet()
 
@@ -702,6 +729,7 @@ class DriverQualificationTest(InstrumentDriverQualificationTestCase, UtilMixin):
         for key in self._driver_parameters.keys():
             # verify access of parameters - default values
             if self._driver_parameters[key][self.DA]:
+                log.debug('checking direct access parameter: %s', key)
                 # verify we cannot set readonly parameters
                 self.assert_get_parameter(key, self._driver_parameters[key][self.VALUE])
 
@@ -725,6 +753,9 @@ class DriverQualificationTest(InstrumentDriverQualificationTestCase, UtilMixin):
         constraints = ParameterConstraints.dict()
         parameters = Parameter.dict()
         for key in constraints:
+            log.debug('djm - checking parameter: %s', key)
+            if self._driver_parameters[parameters[key]][self.READONLY]:
+                continue
             log.debug('djm - setting parameter: %s', key)
             _, _, maximum = constraints[key]
             self.assert_set_parameter(parameters[key], maximum)
@@ -745,7 +776,6 @@ class DriverQualificationTest(InstrumentDriverQualificationTestCase, UtilMixin):
             AgentCapabilityType.AGENT_PARAMETER: self._common_agent_parameters(),
             AgentCapabilityType.RESOURCE_COMMAND: [
                 ProtocolEvent.START_AUTOSAMPLE,
-                ProtocolEvent.STOP_AUTOSAMPLE,
                 ProtocolEvent.GET,
                 ProtocolEvent.SET,
             ],
@@ -758,6 +788,15 @@ class DriverQualificationTest(InstrumentDriverQualificationTestCase, UtilMixin):
         ##################
         #  Streaming Mode
         ##################
+
+        capabilities[AgentCapabilityType.AGENT_COMMAND] = self._common_agent_commands(ResourceAgentState.STREAMING)
+        capabilities[AgentCapabilityType.RESOURCE_COMMAND] = [
+            ProtocolEvent.STOP_AUTOSAMPLE,
+        ]
+
+        self.assert_start_autosample()
+        self.assert_capabilities(capabilities)
+        self.assert_stop_autosample()
 
         ##################
         #  DA Mode

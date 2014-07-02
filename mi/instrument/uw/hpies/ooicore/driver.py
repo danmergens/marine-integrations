@@ -42,6 +42,7 @@ from mi.core.instrument.chunker import StringChunker
 
 
 
+
 # newline.
 NEWLINE = '\r\n'
 log = get_logger()
@@ -156,16 +157,18 @@ class ProtocolEvent(BaseEnum):
     START_AUTOSAMPLE = DriverEvent.START_AUTOSAMPLE
     STOP_AUTOSAMPLE = DriverEvent.STOP_AUTOSAMPLE
     EXECUTE_DIRECT = DriverEvent.EXECUTE_DIRECT
-    ACQUIRE_STATUS = DriverEvent.ACQUIRE_STATUS
+    # ACQUIRE_STATUS = DriverEvent.ACQUIRE_STATUS
 
 
 class Capability(BaseEnum):
     """
     Protocol events that should be exposed to users (subset of above).
     """
+    GET = ProtocolEvent.GET
+    SET = ProtocolEvent.SET
     START_AUTOSAMPLE = ProtocolEvent.START_AUTOSAMPLE
     STOP_AUTOSAMPLE = ProtocolEvent.STOP_AUTOSAMPLE
-    ACQUIRE_STATUS = ProtocolEvent.ACQUIRE_STATUS
+    # ACQUIRE_STATUS = ProtocolEvent.ACQUIRE_STATUS
 
 
 class Parameter(DriverParameter):
@@ -199,8 +202,8 @@ class Parameter(DriverParameter):
     # 'ies sf efo'
     # 'ies sf cal'
     # 'ies sf efm'
-    POWER_COMPASS_W_MOTOR = 'do_compass_pwr_with_motor'  # false
-    KEEP_AWAKE_W_MOTOR = 'do_keep_awake_with_motor'  # true
+    POWER_COMPASS_W_MOTOR = 'dcpwm'  # false
+    KEEP_AWAKE_W_MOTOR = 'dkawm'  # true
     MOTOR_TIMEOUTS_1A = 'm1a_tmoc'  # timeout counts for motor - 200
     MOTOR_TIMEOUTS_1B = 'm1b_tmoc'  # timeout counts for motor - 200
     MOTOR_TIMEOUTS_2A = 'm2a_tmoc'  # timeout counts for motor - 200
@@ -286,6 +289,7 @@ class Command(BaseEnum):
     HEF_POWER_OFF = 'hef_pwr_off'
     HEF_WAKE = 'hef_wake'
     HEF_PARAMS = 'params'
+    HEF_SAVE = 'params save'
     SYNC_CLOCK = 'force_RTC_update'  # align STM clock to RSN date/time
 
     # HEF specific commands
@@ -347,6 +351,7 @@ class Timeout(BaseEnum):
     HEF_POWER_OFF = DEFAULT
     HEF_WAKE = DEFAULT
     HEF_PARAMS = 6
+    HEF_SAVE = DEFAULT
     SYNC_CLOCK = DEFAULT
 
     # HEF specific commands
@@ -1143,16 +1148,26 @@ class Protocol(CommandResponseInstrumentProtocol):
         for cmd in (Command.DEBUG_LEVEL,
                     Command.WSRUN_PINCH,
                     Command.NFC_CALIBRATE,
+                    Command.CAL_HOLD,
                     Command.NHC_COMPASS,
                     Command.COMPASS_SAMPLES,
                     Command.COMPASS_DELAY,
                     Command.MOTOR_SAMPLES,
                     Command.EF_SAMPLES,
                     Command.CAL_SAMPLES,
+                    Command.CONSOLE_TIMEOUT,
+                    Command.WSRUN_DELAY,
+                    Command.MOTOR_DIR_NHOLD,
+                    Command.POWER_COMPASS_W_MOTOR,
+                    Command.KEEP_AWAKE_W_MOTOR,
                     Command.MOTOR_TIMEOUTS_1A,
                     Command.MOTOR_TIMEOUTS_1B,
                     Command.MOTOR_TIMEOUTS_2A,
-                    Command.MOTOR_TIMEOUTS_2B):
+                    Command.MOTOR_TIMEOUTS_2B,
+                    Command.RSN_CONFIG,
+                    Command.INVERT_LED_DRIVERS,
+                    Command.M1A_LED,
+                    Command.M2A_LED, ):
             self._add_response_handler(cmd, self._parse_set_param_response)
 
         # Add sample handlers.
@@ -1194,7 +1209,7 @@ class Protocol(CommandResponseInstrumentProtocol):
         """
         # Add parameter handlers to parameter dict.
         self._param_dict.add(Parameter.SERIAL,
-                             r'#3_ serno\s+= (%(int)s)' % common_matches,
+                             r'serno\s+= (%(int)s)' % common_matches,
                              lambda match: int(match.group(1)),
                              None,
                              type=ParameterDictType.STRING,
@@ -1204,7 +1219,7 @@ class Protocol(CommandResponseInstrumentProtocol):
                              startup_param=False,
                              direct_access=False)
         self._param_dict.add(Parameter.DEBUG_LEVEL,
-                             r'#3_ debug\s+= (%(int)s)' % common_matches,
+                             r'debug\s+= (%(int)s)' % common_matches,
                              lambda match: int(match.group(1)),
                              None,
                              type=ParameterDictType.INT,
@@ -1214,7 +1229,7 @@ class Protocol(CommandResponseInstrumentProtocol):
                              startup_param=True,
                              direct_access=True)
         self._param_dict.add(Parameter.WSRUN_PINCH,
-                             r'#3_ wsrun pinch secs\s+= (%(int)s)' % common_matches,
+                             r'wsrun pinch secs\s+= (%(int)s)' % common_matches,
                              lambda match: int(match.group(1)),
                              None,
                              type=ParameterDictType.INT,
@@ -1224,7 +1239,7 @@ class Protocol(CommandResponseInstrumentProtocol):
                              startup_param=True,
                              direct_access=True)
         self._param_dict.add(Parameter.NFC_CALIBRATE,
-                             r'#3_ nfc calibrate\s+= (%(int)s)' % common_matches,
+                             r'nfc calibrate\s+= (%(int)s)' % common_matches,
                              lambda match: int(match.group(1)),
                              None,
                              type=ParameterDictType.INT,
@@ -1235,7 +1250,7 @@ class Protocol(CommandResponseInstrumentProtocol):
                              startup_param=True,
                              direct_access=True)
         self._param_dict.add(Parameter.CAL_HOLD,
-                             r'#3_ cal hold secs\s+= (%(float)s)' % common_matches,
+                             r'cal hold secs\s+= (%(float)s)' % common_matches,
                              lambda match: float(match.group(1)),
                              None,
                              type=ParameterDictType.FLOAT,
@@ -1246,7 +1261,7 @@ class Protocol(CommandResponseInstrumentProtocol):
                              startup_param=True,
                              direct_access=True)
         self._param_dict.add(Parameter.CAL_SKIP,
-                             r'#3_ cal skip secs\s+= (%(int)s)' % common_matches,
+                             r'cal skip secs\s+= (%(int)s)' % common_matches,
                              lambda match: int(match.group(1)),
                              None,
                              type=ParameterDictType.INT,
@@ -1257,7 +1272,7 @@ class Protocol(CommandResponseInstrumentProtocol):
                              startup_param=False,
                              direct_access=False)
         self._param_dict.add(Parameter.NHC_COMPASS,
-                             r'#3_ nhc compass\s+= (%(int)s)' % common_matches,
+                             r'nhc compass\s+= (%(int)s)' % common_matches,
                              lambda match: int(match.group(1)),
                              None,
                              type=ParameterDictType.INT,
@@ -1268,7 +1283,7 @@ class Protocol(CommandResponseInstrumentProtocol):
                              startup_param=True,
                              visibility=ParameterDictVisibility.READ_WRITE)
         self._param_dict.add(Parameter.COMPASS_SAMPLES,
-                             r'#3_ compass nget\s+= (%(int)s)' % common_matches,
+                             r'compass nget\s+= (%(int)s)' % common_matches,
                              lambda match: int(match.group(1)),
                              None,
                              type=ParameterDictType.INT,
@@ -1279,7 +1294,7 @@ class Protocol(CommandResponseInstrumentProtocol):
                              visibility=ParameterDictVisibility.READ_WRITE)
         # time between measurements in a burst
         self._param_dict.add(Parameter.COMPASS_DELAY,
-                             r'#3_ compass dsecs\s+= (%(int)s)' % common_matches,
+                             r'compass dsecs\s+= (%(int)s)' % common_matches,
                              lambda match: int(match.group(1)),
                              None,
                              type=ParameterDictType.INT,
@@ -1291,7 +1306,7 @@ class Protocol(CommandResponseInstrumentProtocol):
                              visibility=ParameterDictVisibility.READ_WRITE)
         # initial compass measurement (in seconds)
         self._param_dict.add(Parameter.INITIAL_COMPASS,
-                             r'#3_ icompass run secs\s+= (%(int)s)' % common_matches,
+                             r'icompass run secs\s+= (%(int)s)' % common_matches,
                              lambda match: int(match.group(1)),
                              None,
                              type=ParameterDictType.INT,
@@ -1303,7 +1318,7 @@ class Protocol(CommandResponseInstrumentProtocol):
                              visibility=ParameterDictVisibility.READ_ONLY)
         # INITIAL_COMPASS_DELAY = 'icompass dsecs'  #
         self._param_dict.add(Parameter.INITIAL_COMPASS_DELAY,
-                             r'#3_ icompass dsecs\s+= (%(float)s)' % common_matches,
+                             r'icompass dsecs\s+= (%(float)s)' % common_matches,
                              lambda match: float(match.group(1)),
                              None,
                              type=ParameterDictType.INT,
@@ -1314,7 +1329,7 @@ class Protocol(CommandResponseInstrumentProtocol):
                              visibility=ParameterDictVisibility.READ_ONLY)
         # FILE_LENGTH = 'secs per ofile'  # seconds per file (default 86400 - one day)
         self._param_dict.add(Parameter.MOTOR_SAMPLES,
-                             r'#3_ navg mot\s+= (%(int)s)' % common_matches,
+                             r'navg mot\s+= (%(int)s)' % common_matches,
                              lambda match: int(match.group(1)),
                              None,
                              type=ParameterDictType.INT,
@@ -1324,7 +1339,7 @@ class Protocol(CommandResponseInstrumentProtocol):
                              direct_access=True,
                              visibility=ParameterDictVisibility.READ_WRITE)
         self._param_dict.add(Parameter.EF_SAMPLES,
-                             r'#3_ navg ef\s+= (%(int)s)' % common_matches,
+                             r'navg ef\s+= (%(int)s)' % common_matches,
                              lambda match: int(match.group(1)),
                              None,
                              type=ParameterDictType.INT,
@@ -1334,7 +1349,7 @@ class Protocol(CommandResponseInstrumentProtocol):
                              direct_access=True,
                              visibility=ParameterDictVisibility.READ_WRITE)
         self._param_dict.add(Parameter.CAL_SAMPLES,
-                             r'#3_ navg cal\s+= (%(int)s)' % common_matches,
+                             r'navg cal\s+= (%(int)s)' % common_matches,
                              lambda match: int(match.group(1)),
                              None,
                              type=ParameterDictType.INT,
@@ -1345,7 +1360,7 @@ class Protocol(CommandResponseInstrumentProtocol):
                              visibility=ParameterDictVisibility.READ_WRITE)
         self._param_dict.add(
             Parameter.CONSOLE_TIMEOUT,
-            r'#3_ console off timeout\s+= (%(int)s)' % common_matches,
+            r'console off timeout\s+= (%(int)s)' % common_matches,
             lambda match: int(match.group(1)),
             None,
             type=ParameterDictType.INT,
@@ -1355,7 +1370,7 @@ class Protocol(CommandResponseInstrumentProtocol):
             direct_access=True,
             visibility=ParameterDictVisibility.IMMUTABLE)
         self._param_dict.add(Parameter.WSRUN_DELAY,
-                             r'#3_ wsrun delay secs\s+= (%(int)s)' % common_matches,
+                             r'wsrun delay secs\s+= (%(int)s)' % common_matches,
                              lambda match: int(match.group(1)),
                              None,
                              type=ParameterDictType.INT,
@@ -1365,7 +1380,7 @@ class Protocol(CommandResponseInstrumentProtocol):
                              direct_access=True,
                              visibility=ParameterDictVisibility.IMMUTABLE)
         self._param_dict.add(Parameter.MOTOR_DIR_NHOLD,
-                             r'#3_ motor dir nhold\s+= (%(int)s)' % common_matches,
+                             r'motor dir nhold\s+= (%(int)s)' % common_matches,
                              lambda match: int(match.group(1)),
                              None,
                              type=ParameterDictType.INT,
@@ -1375,7 +1390,7 @@ class Protocol(CommandResponseInstrumentProtocol):
                              direct_access=True,
                              visibility=ParameterDictVisibility.IMMUTABLE)
         self._param_dict.add(Parameter.MOTOR_DIR_INIT,
-                             r'#3_ motor dir init\s+= (\w+)',
+                             r'motor dir init\s+= (\w+)',
                              lambda match: match.group(1),
                              None,
                              type=ParameterDictType.STRING,
@@ -1385,8 +1400,8 @@ class Protocol(CommandResponseInstrumentProtocol):
                              direct_access=True,
                              visibility=ParameterDictVisibility.IMMUTABLE)
         self._param_dict.add(Parameter.POWER_COMPASS_W_MOTOR,
-                             r'#3_ do_compass_pwr_with_motor\s+= (%(int)s)',
-                             lambda match: bool(match.group(1)),
+                             r'do_compass_pwr_with_motor\s+= (%(int)s)' % common_matches,
+                             lambda match: bool(int(match.group(1))),
                              None,
                              type=ParameterDictType.BOOL,
                              display_name='Power Compass with Motor',
@@ -1395,8 +1410,8 @@ class Protocol(CommandResponseInstrumentProtocol):
                              direct_access=True,
                              visibility=ParameterDictVisibility.IMMUTABLE)
         self._param_dict.add(Parameter.KEEP_AWAKE_W_MOTOR,
-                             r'#3_ do_keep_awake_with_motor\s+= (%(int)s)',
-                             lambda match: bool(match.group(1)),
+                             r'do_keep_awake_with_motor\s+= (%(int)s)' % common_matches,
+                             lambda match: bool(int(match.group(1))),
                              None,
                              type=ParameterDictType.BOOL,
                              display_name='Keep Awake with Motor',
@@ -1405,7 +1420,7 @@ class Protocol(CommandResponseInstrumentProtocol):
                              direct_access=True,
                              visibility=ParameterDictVisibility.IMMUTABLE)
         self._param_dict.add(Parameter.MOTOR_TIMEOUTS_1A,
-                             r'#3_ m1a_tmoc\s+= (%(int)s)' % common_matches,
+                             r'm1a_tmoc\s+= (%(int)s)' % common_matches,
                              lambda match: int(match.group(1)),
                              None,
                              type=ParameterDictType.INT,
@@ -1416,7 +1431,7 @@ class Protocol(CommandResponseInstrumentProtocol):
                              direct_access=True,
                              visibility=ParameterDictVisibility.READ_WRITE)
         self._param_dict.add(Parameter.MOTOR_TIMEOUTS_1B,
-                             r'#3_ m1b_tmoc\s+= (%(int)s)' % common_matches,
+                             r'm1b_tmoc\s+= (%(int)s)' % common_matches,
                              lambda match: int(match.group(1)),
                              None,
                              type=ParameterDictType.INT,
@@ -1427,7 +1442,7 @@ class Protocol(CommandResponseInstrumentProtocol):
                              direct_access=True,
                              visibility=ParameterDictVisibility.READ_WRITE)
         self._param_dict.add(Parameter.MOTOR_TIMEOUTS_2A,
-                             r'#3_ m2a_tmoc\s+= (%(int)s)' % common_matches,
+                             r'm2a_tmoc\s+= (%(int)s)' % common_matches,
                              lambda match: int(match.group(1)),
                              None,
                              type=ParameterDictType.INT,
@@ -1438,7 +1453,7 @@ class Protocol(CommandResponseInstrumentProtocol):
                              direct_access=True,
                              visibility=ParameterDictVisibility.READ_WRITE)
         self._param_dict.add(Parameter.MOTOR_TIMEOUTS_2B,
-                             r'#3_ m2b_tmoc\s+= (%(int)s)' % common_matches,
+                             r'm2b_tmoc\s+= (%(int)s)' % common_matches,
                              lambda match: int(match.group(1)),
                              None,
                              type=ParameterDictType.INT,
@@ -1449,8 +1464,8 @@ class Protocol(CommandResponseInstrumentProtocol):
                              direct_access=True,
                              visibility=ParameterDictVisibility.READ_WRITE)
         self._param_dict.add(Parameter.RSN_CONFIG,
-                             r'#3_ do_rsn\s+= (%(int)s)' % common_matches,
-                             lambda match: bool(match.group(1)),
+                             r'do_rsn\s+= (%(int)s)' % common_matches,
+                             lambda match: bool(int(match.group(1))),
                              None,
                              type=ParameterDictType.BOOL,
                              display_name='Configured for RSN',
@@ -1459,8 +1474,8 @@ class Protocol(CommandResponseInstrumentProtocol):
                              direct_access=True,
                              visibility=ParameterDictVisibility.IMMUTABLE)
         self._param_dict.add(Parameter.INVERT_LED_DRIVERS,
-                             r'#3_ led_drivers_invert\s+= (%(int)s)',
-                             lambda match: bool(match.group(1)),
+                             r'led_drivers_invert\s+= (%(int)s)' % common_matches,
+                             lambda match: bool(int(match.group(1))),
                              None,
                              type=ParameterDictType.BOOL,
                              display_name='Invert LED Drivers',
@@ -1469,7 +1484,7 @@ class Protocol(CommandResponseInstrumentProtocol):
                              direct_access=True,
                              visibility=ParameterDictVisibility.IMMUTABLE)
         self._param_dict.add(Parameter.M1A_LED,
-                             r'#3_ m1a_led\s+= (%(int)s)' % common_matches,
+                             r'm1a_led\s+= (%(int)s)' % common_matches,
                              lambda match: int(match.group(1)),
                              None,
                              type=ParameterDictType.INT,
@@ -1479,7 +1494,7 @@ class Protocol(CommandResponseInstrumentProtocol):
                              direct_access=True,
                              visibility=ParameterDictVisibility.IMMUTABLE)
         self._param_dict.add(Parameter.M2A_LED,
-                             r'#3_ m2a_led\s+= (%(int)s)' % common_matches,
+                             r'm2a_led\s+= (%(int)s)' % common_matches,
                              lambda match: int(match.group(1)),
                              None,
                              type=ParameterDictType.INT,
@@ -1854,6 +1869,7 @@ class Protocol(CommandResponseInstrumentProtocol):
             return stm_command(cmd, *args)
         elif cmd in (Command.PREFIX,
                      Command.HEF_PARAMS,
+                     Command.HEF_SAVE,
                      Command.MISSION_START,
                      Command.MISSION_STOP,
                      Command.DEBUG_LEVEL,
@@ -1907,19 +1923,20 @@ class Protocol(CommandResponseInstrumentProtocol):
         @param response command string
         @retval True if able to update parameters, False otherwise
         """
-        log.debug('parameter dictionary:\r%s' % self._param_dict)
+        log.debug('djm parameter dictionary:\r%s', self._param_dict.get_all())
         if re.match(Response.ERROR, response):
             raise InstrumentParameterException('unable to get parameters - data acquisition has not been started')
 
         param_lines = []
         for line in response.split(NEWLINE):
-            log.trace('checking line for parameter: %r' % line)
+            log.debug('checking line for parameter: %r' % line)
             if ' = ' in line:
                 if valid_response(line):
-                    log.trace('checksum valid, setting value')
+                    log.debug('checksum valid, setting value')
                     param_lines.append(line)
         dictionary = self._param_dict.update_many(response)
         if dictionary:
+            log.debug('djm updated dictionary: %r', self._param_dict.get_all())
             return True
 
         return False
@@ -2008,7 +2025,7 @@ class Protocol(CommandResponseInstrumentProtocol):
         # any existing mission needs to be stopped. If one is not already running, no harm in sending the stop.
         self._do_cmd_no_resp(Command.MISSION_STOP)
 
-        return ProtocolState.COMMAND, ResourceAgentState.COMMAND
+        return ProtocolState.COMMAND, ResourceAgentState.IDLE
 
     ########################################################################
     # Command handlers.
@@ -2088,8 +2105,7 @@ class Protocol(CommandResponseInstrumentProtocol):
 
         # For each key, val in the dict, issue set command to device.
         # Raise if the command not understood.
-        else:
-            self._set_params(params, startup)
+        self._set_params(params, startup)
 
         return None, None
 
@@ -2190,8 +2206,9 @@ class Protocol(CommandResponseInstrumentProtocol):
         error = None
 
         try:
-            log.debug("sbe apply_startup_params now")
-            self._apply_params()
+            log.debug("apply_startup_params now")
+            self._set_params(self.get_startup_config(), True)
+            self._do_cmd_resp(Command.HEF_SAVE, expected_prompt=Prompt.HEF_PROMPT, timeout=Timeout.HEF_SAVE)
 
         # Catch all errors so we can put driver back into streaming. Then rethrow the error.
         except Exception as e:
@@ -2298,21 +2315,24 @@ class Protocol(CommandResponseInstrumentProtocol):
         self._verify_not_readonly(*args, **kwargs)
 
         for key, val in params.iteritems():
-            if key in old_config:
-                self._do_cmd_resp(key, val, expected_prompt=Prompt.HEF_PROMPT)
-            else:
+            if not key in old_config:
                 raise InstrumentParameterException('attempted to set unknown parameter: %s to %s' % (key, val))
+            command_response = self._do_cmd_resp(key, val, expected_prompt=Prompt.HEF_PROMPT)
+            log.debug('command: %r returned: %r', key, command_response)
 
         new_config = self._param_dict.get_all()
+        log.debug('djm old config: %r', old_config)
+        log.debug('djm new config: %r', new_config)
 
         if new_config != old_config:
+            log.debug('djm configuration differs, saving parameters and signaling event')
             self._driver_event(DriverAsyncEvent.CONFIG_CHANGE)
 
-    def _apply_params(self):
-        """
-        apply startup parameters to the instrument.
-        @raise: InstrumentProtocolException if in wrong mode.
-        """
-        config = self.get_startup_config()
-        # Pass true to _set_params so we know these are startup values
-        self._set_params(config, True)
+            # def _apply_params(self):
+            # """
+            #     apply startup parameters to the instrument.
+            #     @raise: InstrumentProtocolException if in wrong mode.
+            #     """
+            #     config = self.get_startup_config()
+            #     # Pass true to _set_params so we know these are startup values
+            #     self._set_params(config, True)
